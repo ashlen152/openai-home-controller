@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manga Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: system-ui, sans-serif;
+      }
+      .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+      }
+      .scrollbar-thin::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 3px;
+      }
+      .log-collapsed {
+        max-height: 100px;
+        overflow: hidden;
+      }
+      .log-expanded {
+        max-height: 500px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 px-4 py-3">
+      <div class="flex items-center justify-between max-w-7xl mx-auto">
+        <h1 class="text-xl font-bold text-purple-400">📚 Manga Reader</h1>
+        <span class="text-sm text-gray-400">API: http://localhost:3000</span>
+      </div>
+    </header>
+
+    <!-- Actions Bar -->
+    <div class="bg-gray-800 border-b border-gray-700 px-4 py-3">
+      <div class="max-w-7xl mx-auto flex flex-wrap gap-2 items-center">
+        <button
+          onclick="syncBookmarks()"
+          class="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition"
+        >
+          🔄 Sync Bookmarks
+        </button>
+        <button
+          onclick="checkNewChapters()"
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium transition"
+        >
+          📊 Check New Chapters
+        </button>
+        <button
+          onclick="crawlNewChapters()"
+          class="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg font-medium transition"
+        >
+          📥 Crawl New (5)
+        </button>
+        <button
+          onclick="embedAll()"
+          class="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 rounded-lg font-medium transition"
+        >
+          🧠 Embed
+        </button>
+        <div class="ml-auto flex items-center gap-2">
+          <input
+            type="text"
+            id="search-input"
+            placeholder="Search manga..."
+            class="px-3 py-1 bg-gray-700 border border-gray-600 rounded text-sm"
+            onkeypress="if (event.key === 'Enter') ragSearch();"
+          />
+          <button
+            onclick="ragSearch()"
+            class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-sm"
+          >
+            🔍
+          </button>
+        </div>
+        <div class="text-sm text-gray-400" id="status">Ready</div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-4">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+        <!-- Manga List -->
+        <div class="md:col-span-3 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+          <div class="p-3 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="font-semibold text-purple-300">📚 Manga List</h2>
+            <button onclick="loadMangas()" class="text-xs text-gray-400 hover:text-white">↻</button>
+          </div>
+          <div id="manga-list" class="h-96 overflow-y-auto scrollbar-thin">
+            <div class="p-4 text-gray-400 text-center">Loading...</div>
+          </div>
+        </div>
+
+        <!-- Episodes List -->
+        <div class="md:col-span-3 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+          <div class="p-3 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="font-semibold text-purple-300">📖 Episodes</h2>
+            <button
+              id="back-btn"
+              onclick="backToMangas()"
+              class="hidden text-xs text-gray-400 hover:text-white"
+            >
+              ← Back
+            </button>
+          </div>
+          <div id="episode-list" class="h-96 overflow-y-auto scrollbar-thin">
+            <div class="p-4 text-gray-400 text-center">Select a manga</div>
+          </div>
+        </div>
+
+        <!-- Reader -->
+        <div class="md:col-span-6 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+          <div class="p-3 border-b border-gray-700 flex justify-between items-center">
+            <h2 class="font-semibold text-purple-300" id="reader-title">📰 Reader</h2>
+            <span id="image-count" class="text-xs text-gray-400"></span>
+          </div>
+          <div id="reader" class="h-[500px] overflow-y-auto scrollbar-thin p-4">
+            <div class="text-gray-400 text-center">Select an episode to read</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- API Logs -->
+      <div class="mt-4 bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+        <div
+          class="p-3 border-b border-gray-700 flex justify-between items-center cursor-pointer"
+          onclick="toggleLogs()"
+        >
+          <h2 class="font-semibold text-purple-300">📜 API Logs</h2>
+          <span id="log-toggle" class="text-xs text-gray-400">▼ Expand</span>
+        </div>
+        <div id="logs" class="p-4 hidden">
+          <pre
+            id="log-content"
+            class="text-xs text-green-400 whitespace-pre-wrap bg-gray-900 p-3 rounded max-h-60 overflow-auto"
+          ></pre>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const API = 'http://localhost:3000/api';
+      let currentMangaId = null;
+      let logsExpanded = false;
+
+      function log(data, type = 'info') {
+        const content = document.getElementById('log-content');
+        const entry = document.createElement('div');
+        entry.className = 'mb-2 pb-2 border-b border-gray-700';
+        entry.innerHTML = `<span class="text-gray-500">${new Date().toLocaleTimeString()}</span> <span class="text-${type === 'error' ? 'red' : type === 'success' ? 'green' : 'blue'}-400">[${type}]</span>\n${JSON.stringify(data, null, 2)}`;
+        content.insertBefore(entry, content.firstChild);
+        if (content.children.length > 20) content.removeChild(content.lastChild);
+      }
+
+      function setStatus(msg) {
+        document.getElementById('status').textContent = msg;
+      }
+
+      function toggleLogs() {
+        logsExpanded = !logsExpanded;
+        document.getElementById('logs').classList.toggle('hidden');
+        document.getElementById('log-toggle').textContent = logsExpanded
+          ? '▲ Collapse'
+          : '▼ Expand';
+      }
+
+      async function api(endpoint, options = {}) {
+        try {
+          const res = await fetch(`${API}${endpoint}`, options);
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'API Error');
+          return data;
+        } catch (e) {
+          log(e.message, 'error');
+          throw e;
+        }
+      }
+
+      async function loadMangas() {
+        const el = document.getElementById('manga-list');
+        el.innerHTML = '<div class="p-4 text-gray-400 text-center">Loading...</div>';
+        try {
+          const data = await api('/mangas');
+          if (!data.data?.length) {
+            el.innerHTML = '<div class="p-4 text-gray-400 text-center">No manga found</div>';
+            return;
+          }
+          el.innerHTML = data.data
+            .map(
+              (m) => `
+          <div class="p-3 border-b border-gray-700 hover:bg-gray-700 cursor-pointer transition" onclick="loadEpisodes('${m._id}')">
+            <div class="font-medium truncate">${m.title}</div>
+            <div class="text-xs text-gray-400 mt-1">
+              Ch. ${m.currentChapter || 0} / ${m.latestChapter || 0}
+              ${m.hasNewChapters ? '<span class="text-green-400 ml-1">● NEW</span>' : ''}
+            </div>
+          </div>
+        `,
+            )
+            .join('');
+          log(`Loaded ${data.data.length} manga`);
+        } catch (e) {
+          el.innerHTML = `<div class="p-4 text-red-400">Error: ${e.message}</div>`;
+        }
+      }
+
+      async function loadEpisodes(mangaId) {
+        currentMangaId = mangaId;
+        const el = document.getElementById('episode-list');
+        document.getElementById('back-btn').classList.remove('hidden');
+        el.innerHTML = '<div class="p-4 text-gray-400 text-center">Loading...</div>';
+        try {
+          const data = await api(`/mangas/${mangaId}/episodes`);
+          if (!data.data?.length) {
+            el.innerHTML = '<div class="p-4 text-gray-400 text-center">No episodes</div>';
+            return;
+          }
+          el.innerHTML = data.data
+            .map(
+              (e) => `
+          <div class="p-3 border-b border-gray-700 hover:bg-gray-700 cursor-pointer transition ${e.isNew ? 'bg-green-900/30' : ''}" onclick="loadEpisode('${e._id}')">
+            <div class="font-medium">Ch. ${e.number}</div>
+            <div class="text-xs text-gray-400 truncate">${e.title || 'Chapter ' + e.number}</div>
+            <div class="text-xs text-gray-500 mt-1">${e.imageUrls?.length || 0} images</div>
+          </div>
+        `,
+            )
+            .join('');
+          log(`Loaded ${data.data.length} episodes`);
+        } catch (e) {
+          el.innerHTML = `<div class="p-4 text-red-400">Error: ${e.message}</div>`;
+        }
+      }
+
+      async function loadEpisode(episodeId) {
+        const reader = document.getElementById('reader');
+        const titleEl = document.getElementById('reader-title');
+        const countEl = document.getElementById('image-count');
+
+        reader.innerHTML = '<div class="text-gray-400 text-center py-10">Loading...</div>';
+        try {
+          const data = await api(`/episodes/${episodeId}`);
+          const images = data.imageUrls || [];
+          titleEl.textContent = `📰 ${data.title || 'Chapter ' + data.number}`;
+          countEl.textContent = `${images.length} images`;
+
+          if (!images.length) {
+            reader.innerHTML = '<div class="text-gray-400 text-center">No images</div>';
+            return;
+          }
+
+          reader.innerHTML = images
+            .map(
+              (src) =>
+                `<img src="${src}" class="mx-auto mb-4 rounded shadow-lg" style="max-width:100%">`,
+            )
+            .join('');
+          log({ episode: data.title, images: images.length }, 'success');
+        } catch (e) {
+          reader.innerHTML = `<div class="text-red-400 text-center">Error: ${e.message}</div>`;
+        }
+      }
+
+      function backToMangas() {
+        currentMangaId = null;
+        document.getElementById('back-btn').classList.add('hidden');
+        document.getElementById('episode-list').innerHTML =
+          '<div class="p-4 text-gray-400 text-center">Select a manga</div>';
+        document.getElementById('reader').innerHTML =
+          '<div class="text-gray-400 text-center">Select an episode to read</div>';
+        document.getElementById('reader-title').textContent = '📰 Reader';
+        document.getElementById('image-count').textContent = '';
+        loadMangas();
+      }
+
+      async function syncBookmarks() {
+        setStatus('Syncing...');
+        try {
+          const data = await api('/crawl/bookmarks/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dryRun: false }),
+          });
+          log(data, 'success');
+          setStatus(`Synced: ${data.total} bookmarks`);
+          loadMangas();
+        } catch (e) {
+          setStatus('Error');
+        }
+      }
+
+      async function checkNewChapters() {
+        setStatus('Checking...');
+        try {
+          const data = await api('/crawl/chapters/check');
+          log(data, 'success');
+          setStatus(`${data.newChaptersFound} new chapters in ${data.mangaWithNewChapters} manga`);
+          loadMangas();
+        } catch (e) {
+          setStatus('Error');
+        }
+      }
+
+      async function crawlNewChapters() {
+        if (!currentMangaId) {
+          alert('Select a manga first!');
+          return;
+        }
+        setStatus('Crawling...');
+        try {
+          const data = await api('/crawl/chapters/crawl', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mangaId: currentMangaId, dryRun: false, maxChapters: 5 }),
+          });
+          log(data, 'success');
+          setStatus(`Crawled: ${data.newEpisodes} episodes`);
+          loadMangas();
+          if (currentMangaId) loadEpisodes(currentMangaId);
+        } catch (e) {
+          setStatus('Error');
+        }
+      }
+
+      async function embedAll() {
+        setStatus('Embedding...');
+        try {
+          const data = await api('/rag/embed', { method: 'POST' });
+          log(data, 'success');
+          setStatus(`Embedded: ${data.embedded} episodes`);
+        } catch (e) {
+          setStatus('Embed error');
+        }
+      }
+
+      async function ragSearch() {
+        const input = document.getElementById('search-input');
+        const query = input.value.trim();
+        if (!query) return;
+
+        setStatus('Searching...');
+        try {
+          const data = await api(`/rag/search?q=${encodeURIComponent(query)}`);
+          log(data, 'success');
+
+          // Show result in reader
+          const reader = document.getElementById('reader');
+          const titleEl = document.getElementById('reader-title');
+          const countEl = document.getElementById('image-count');
+
+          titleEl.textContent = '🔍 Search Results';
+          countEl.textContent = '';
+
+          reader.innerHTML = `
+            <div class="mb-4 p-4 bg-gray-700 rounded">
+              <div class="font-medium text-purple-300 mb-2">Query: "${query}"</div>
+              <div class="text-green-400 font-medium">Answer:</div>
+              <div class="mt-2 text-gray-200">${data.answer || 'No answer found'}</div>
+            </div>
+            ${
+              data.sources?.length
+                ? `
+              <div class="text-sm text-gray-400">
+                <div class="font-medium text-yellow-400 mb-2">Sources (${data.sources.length}):</div>
+                ${data.sources
+                  .map(
+                    (s) => `
+                  <div class="mb-2 p-2 bg-gray-900 rounded">
+                    <div class="text-gray-300">${s.content || s.episodeTitle || 'Unknown'}</div>
+                    <div class="text-xs text-gray-500 mt-1">Similarity: ${((s.similarity || 0) * 100).toFixed(1)}%</div>
+                  </div>
+                `,
+                  )
+                  .join('')}
+              </div>
+            `
+                : ''
+            }
+          `;
+
+          setStatus('Done');
+          input.value = '';
+        } catch (e) {
+          setStatus('Search error');
+        }
+      }
+
+      loadMangas();
+    </script>
+  </body>
+</html>

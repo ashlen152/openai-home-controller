@@ -1,0 +1,23 @@
+{
+  "name": "smartpump-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/server"
+  ],
+  "scripts": {
+    "server:dev": "npm run start:dev --workspace=apps/server",
+    "server:build": "npm run build --workspace=apps/server",
+    "server:start": "npm run start:prod --workspace=apps/server",
+    "server:test": "npm run test --workspace=apps/server",
+    "server:test:e2e": "npm run test:e2e --workspace=apps/server",
+    "server:lint": "npm run lint --workspace=apps/server",
+    "server:format": "npm run format --workspace=apps/server",
+    "server:mdns": "npm run start:mdns --workspace=apps/server",
+    "install:all": "npm install",
+    "docker": "docker compose -f apps/server/docker-compose.yml up -d"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
