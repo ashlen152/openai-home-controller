@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=3.0, user-scalable=yes"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#000000" />
+    <title>Manga Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        background: #000;
+        overscroll-behavior: none;
+        touch-action: manipulation;
+        min-height: 100vh;
+        min-height: 100dvh;
+      }
+      .manga-img {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        margin: 0 auto;
+        object-fit: contain;
+      }
+      .tap-zone {
+        position: fixed;
+        top: 0;
+        bottom: 60px;
+        width: 33.33%;
+        z-index: 10;
+        cursor: pointer;
+      }
+      .tap-left {
+        left: 0;
+      }
+      .tap-center {
+        left: 33.33%;
+      }
+      .tap-right {
+        right: 0;
+      }
+      .controls {
+        position: fixed;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+      }
+      .controls-top {
+        top: 0;
+        padding: 12px 16px;
+        background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.6));
+      }
+      .controls-bottom {
+        bottom: 0;
+        padding: 12px 16px;
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        background: linear-gradient(to top, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.6));
+      }
+      .controls.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+      .progress-bar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.2);
+        z-index: 200;
+      }
+      .progress-fill {
+        height: 100%;
+        background: #a855f7;
+        width: 0%;
+        transition: width 0.15s;
+      }
+      .toast {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 16px 32px;
+        border-radius: 12px;
+        z-index: 300;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid rgba(168, 85, 247, 0.5);
+        box-shadow: 0 0 30px rgba(168, 85, 247, 0.3);
+      }
+      .toast.hidden {
+        display: none;
+      }
+      .reader-scroll {
+        height: 100vh;
+        height: 100dvh;
+        overflow-y: scroll;
+        -webkit-overflow-scrolling: touch;
+      }
+      .chapter-list-item {
+        padding: 14px 16px;
+        border-bottom: 1px solid #333;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .chapter-list-item:hover,
+      .chapter-list-item:active {
+        background: #222;
+      }
+      .chapter-list-item.current {
+        background: rgba(168, 85, 247, 0.3);
+        border-left: 3px solid #a855f7;
+      }
+      .scroll-indicator {
+        position: fixed;
+        right: 8px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 4px;
+        height: 60px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 2px;
+        z-index: 50;
+      }
+      .scroll-thumb {
+        width: 100%;
+        background: #a855f7;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body class="bg-black text-white">
+    <div id="app" class="min-h-screen">
+      <div id="loading" class="flex items-center justify-center min-h-screen">
+        <div class="text-center">
+          <div class="text-4xl mb-4">📚</div>
+          <div class="text-purple-400 font-semibold">Loading...</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast" class="toast hidden"></div>
+
+    <script>
+      const API = 'http://localhost:3000/api';
+      let state = {
+        mode: 'list',
+        manga: null,
+        episodes: [],
+        currentIndex: 0,
+        images: [],
+        scrollPosition: 0,
+        controlsVisible: true,
+        loading: false,
+      };
+
+      const app = document.getElementById('app');
+      const toast = document.getElementById('toast');
+
+      function init() {
+        const params = new URLSearchParams(window.location.search);
+        const episodeId = params.get('episode');
+        const mangaId = params.get('manga');
+
+        if (episodeId) {
+          loadEpisodeById(episodeId);
+        } else if (mangaId) {
+          loadManga(mangaId);
+        } else {
+          loadMangaList();
+        }
+      }
+
+      async function api(endpoint, options = {}) {
+        try {
+          const res = await fetch(`${API}${endpoint}`, options);
+          return await res.json();
+        } catch (e) {
+          showToast('Connection error');
+          return null;
+        }
+      }
+
+      function showToast(message, duration = 2500) {
+        toast.textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), duration);
+      }
+
+      async function loadMangaList() {
+        state.mode = 'list';
+        const data = await api('/mangas');
+        const mangas = data?.data || [];
+
+        app.innerHTML = `
+        <header class="sticky top-0 z-50 bg-gray-900 border-b border-gray-800 px-4 py-3">
+          <h1 class="text-lg font-bold text-purple-400">📚 My Manga</h1>
+        </header>
+        <main class="pb-20">
+          ${
+            mangas.length === 0
+              ? `
+            <div class="text-center py-12 text-gray-500">
+              <div class="text-4xl mb-4">📭</div>
+              <p>No manga found</p>
+              <p class="text-sm mt-2">Sync bookmarks first</p>
+            </div>
+          `
+              : mangas
+                  .map(
+                    (m) => `
+            <div class="chapter-list-item" onclick="loadManga('${m._id}')">
+              <div class="font-semibold">${m.title}</div>
+              <div class="text-sm text-gray-400 mt-1 flex justify-between">
+                <span>Ch. ${m.currentChapter || 0} / ${m.latestChapter || 0}</span>
+                ${m.hasNewChapters ? '<span class="text-green-400">● NEW</span>' : ''}
+              </div>
+            </div>
+          `,
+                  )
+                  .join('')
+          }
+        </main>
+        <nav class="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 flex">
+          <button onclick="loadMangaList()" class="flex-1 py-3 text-center ${!state.manga ? 'text-purple-400' : 'text-gray-400'}">
+            <div class="text-xl">📚</div>
+            <div class="text-xs mt-1">Library</div>
+          </button>
+          <button onclick="loadLatestChapter()" class="flex-1 py-3 text-center text-gray-400">
+            <div class="text-xl">▶️</div>
+            <div class="text-xs mt-1">Continue</div>
+          </button>
+        </nav>
+      `;
+      }
+
+      async function loadManga(mangaId) {
+        state.loading = true;
+        app.innerHTML = `
+        <div class="flex items-center justify-center min-h-screen">
+          <div class="text-purple-400 font-semibold">Loading manga...</div>
+        </div>
+      `;
+
+        const data = await api(`/mangas/${mangaId}`);
+        if (!data) {
+          loadMangaList();
+          return;
+        }
+
+        const episodesData = await api(`/mangas/${mangaId}/episodes`);
+        const episodes = (episodesData?.data || []).sort((a, b) => a.number - b.number);
+
+        state.manga = data;
+        state.episodes = episodes;
+
+        if (episodes.length > 0) {
+          state.currentIndex = episodes.length - 1;
+          renderReadingMode();
+        } else {
+          app.innerHTML = `
+          <div class="flex flex-col items-center justify-center min-h-screen px-4">
+            <div class="text-4xl mb-4">📖</div>
+            <h2 class="text-xl font-bold mb-2">${data.title}</h2>
+            <p class="text-gray-400 text-center mb-6">No chapters crawled yet</p>
+            <button onclick="crawlAndRead('${mangaId}')" class="px-6 py-3 bg-purple-600 rounded-lg font-semibold">
+              📥 Crawl & Read
+            </button>
+            <button onclick="loadMangaList()" class="mt-4 text-gray-400">← Back to Library</button>
+          </div>
+        `;
+        }
+      }
+
+      async function crawlAndRead(mangaId) {
+        showToast('📥 Crawling chapters...');
+        const result = await api('/crawl/chapters/crawl', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mangaId, dryRun: false, maxChapters: 5 }),
+        });
+
+        if (result?.newEpisodes > 0) {
+          showToast(`✅ Crawled ${result.newEpisodes} chapters`);
+          setTimeout(() => loadManga(mangaId), 1500);
+        } else {
+          showToast('No new chapters found');
+          loadManga(mangaId);
+        }
+      }
+
+      async function loadEpisodeById(episodeId) {
+        state.loading = true;
+        const data = await api(`/episodes/${episodeId}`);
+        if (!data) {
+          loadMangaList();
+          return;
+        }
+
+        const mangaData = await api(`/mangas/${data.mangaId}`);
+        const episodesData = await api(`/mangas/${data.mangaId}/episodes`);
+        const episodes = (episodesData?.data || []).sort((a, b) => a.number - b.number);
+
+        state.manga = mangaData;
+        state.episodes = episodes;
+        state.currentIndex = episodes.findIndex((e) => e._id === episodeId);
+        if (state.currentIndex < 0) state.currentIndex = 0;
+
+        renderReadingMode();
+      }
+
+      async function loadLatestChapter() {
+        const data = await api('/mangas');
+        const mangas = data?.data || [];
+
+        const unreadManga = mangas.filter((m) => m.hasNewChapters);
+        const targetManga = unreadManga.length > 0 ? unreadManga[0] : mangas[0];
+
+        if (targetManga) {
+          await loadManga(targetManga._id);
+        } else {
+          showToast('No manga available');
+        }
+      }
+
+      function renderReadingMode() {
+        const episode = state.episodes[state.currentIndex];
+        if (!episode) return;
+
+        state.images = episode.imageUrls || [];
+        state.mode = 'reading';
+        state.loading = false;
+
+        app.innerHTML = `
+        <div class="progress-bar">
+          <div id="progress-fill" class="progress-fill"></div>
+        </div>
+
+        <div id="top-controls" class="controls controls-top">
+          <div class="flex items-center justify-between">
+            <button onclick="goToList()" class="text-xl p-2">←</button>
+            <div class="flex-1 text-center px-2 min-w-0">
+              <div id="manga-title" class="font-bold text-purple-400 truncate text-sm">${state.manga?.title || ''}</div>
+              <div id="chapter-title" class="text-xs text-gray-400 truncate">${episode.title || 'Ch. ' + episode.number}</div>
+            </div>
+            <button onclick="showChapterPicker()" class="text-xl p-2">☰</button>
+          </div>
+        </div>
+
+        <div class="tap-zone tap-left" onclick="handleTap('left')"></div>
+        <div class="tap-zone tap-center" onclick="handleTap('center')"></div>
+        <div class="tap-zone tap-right" onclick="handleTap('right')"></div>
+
+        <div class="scroll-indicator" id="scroll-indicator">
+          <div id="scroll-thumb" class="scroll-thumb" style="height: 20%"></div>
+        </div>
+
+        <div id="reader" class="reader-scroll pb-16 pt-12">
+          ${state.images
+            .map(
+              (src, i) => `
+            <img src="${src}" class="manga-img" loading="${i < 2 ? 'eager' : 'lazy'}" onerror="this.style.display='none'">
+          `,
+            )
+            .join('')}
+        </div>
+
+        <div id="bottom-controls" class="controls controls-bottom">
+          <div class="flex items-center justify-between text-xs text-gray-400 mb-2">
+            <span id="page-info">${state.currentIndex + 1} / ${state.episodes.length}</span>
+            <span id="img-info">${state.images.length} pages</span>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="prevChapter()" class="flex-1 py-3 bg-gray-800 rounded-lg font-semibold ${state.currentIndex <= 0 ? 'opacity-50' : ''}">◀ Prev</button>
+            <button onclick="toggleControls()" class="py-3 px-4 bg-gray-800 rounded-lg">👁️</button>
+            <button onclick="nextChapter()" class="flex-1 py-3 bg-purple-600 rounded-lg font-semibold">Next ▶</button>
+          </div>
+        </div>
+
+        <div id="chapter-modal" class="fixed inset-0 z-[200] bg-black hidden">
+          <div class="h-full flex flex-col">
+            <div class="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800">
+              <h2 class="font-bold text-purple-400">Chapters</h2>
+              <button onclick="hideChapterPicker()" class="text-2xl">✕</button>
+            </div>
+            <div id="chapter-list" class="flex-1 overflow-y-auto"></div>
+          </div>
+        </div>
+      `;
+
+        document.getElementById('reader').addEventListener('scroll', onScroll);
+        onScroll();
+      }
+
+      function onScroll() {
+        const reader = document.getElementById('reader');
+        if (!reader) return;
+
+        const scrollTop = reader.scrollTop;
+        const scrollHeight = reader.scrollHeight - reader.clientHeight;
+        const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+
+        const fill = document.getElementById('progress-fill');
+        const thumb = document.getElementById('scroll-thumb');
+        if (fill) fill.style.width = `${progress}%`;
+        if (thumb) thumb.style.marginTop = `${(progress / 100) * 80}%`;
+      }
+
+      function handleTap(zone) {
+        const reader = document.getElementById('reader');
+        if (!reader) return;
+
+        if (zone === 'center') {
+          toggleControls();
+        } else if (zone === 'left') {
+          reader.scrollBy({ top: -window.innerHeight * 0.5, behavior: 'smooth' });
+        } else if (zone === 'right') {
+          reader.scrollBy({ top: window.innerHeight * 0.5, behavior: 'smooth' });
+        }
+      }
+
+      function toggleControls() {
+        state.controlsVisible = !state.controlsVisible;
+        document.getElementById('top-controls')?.classList.toggle('hidden', !state.controlsVisible);
+        document
+          .getElementById('bottom-controls')
+          ?.classList.toggle('hidden', !state.controlsVisible);
+      }
+
+      function goToList() {
+        if (state.manga) {
+          loadManga(state.manga._id);
+        } else {
+          loadMangaList();
+        }
+      }
+
+      function showChapterPicker() {
+        const modal = document.getElementById('chapter-modal');
+        const list = document.getElementById('chapter-list');
+
+        list.innerHTML = state.episodes
+          .map(
+            (e, i) => `
+        <div class="chapter-list-item ${i === state.currentIndex ? 'current' : ''}" onclick="selectChapter(${i})">
+          <div class="font-medium">${e.title || 'Chapter ' + e.number}</div>
+          <div class="text-xs text-gray-500 mt-1">${e.imageUrls?.length || 0} pages</div>
+        </div>
+      `,
+          )
+          .join('');
+
+        modal.classList.remove('hidden');
+      }
+
+      function hideChapterPicker() {
+        document.getElementById('chapter-modal')?.classList.add('hidden');
+      }
+
+      function selectChapter(index) {
+        state.currentIndex = index;
+        hideChapterPicker();
+        renderReadingMode();
+        scrollToTop();
+      }
+
+      async function prevChapter() {
+        if (state.currentIndex > 0) {
+          state.currentIndex--;
+          renderReadingMode();
+          scrollToTop();
+        } else {
+          showToast('First chapter');
+        }
+      }
+
+      async function nextChapter() {
+        if (state.currentIndex < state.episodes.length - 1) {
+          state.currentIndex++;
+          renderReadingMode();
+          scrollToTop();
+        } else {
+          showToast('No more chapters. Checking for new...');
+          await checkAndCrawlNew();
+        }
+      }
+
+      async function checkAndCrawlNew() {
+        if (!state.manga) return;
+
+        const result = await api('/crawl/chapters/crawl', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mangaId: state.manga._id, dryRun: false, maxChapters: 5 }),
+        });
+
+        if (result?.newEpisodes > 0) {
+          showToast(`📥 Found ${result.newEpisodes} new chapters!`);
+
+          const episodesData = await api(`/mangas/${state.manga._id}/episodes`);
+          state.episodes = (episodesData?.data || []).sort((a, b) => a.number - b.number);
+          state.currentIndex = state.episodes.length - 1;
+
+          setTimeout(() => {
+            renderReadingMode();
+            scrollToTop();
+          }, 1500);
+        } else {
+          showToast('✅ All caught up! No new chapters.');
+        }
+      }
+
+      function scrollToTop() {
+        const reader = document.getElementById('reader');
+        if (reader) reader.scrollTop = 0;
+      }
+
+      init();
+    </script>
+  </body>
+</html>

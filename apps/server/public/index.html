@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenAI Workflow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Poppins:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="logo">
+        <span class="logo-icon">⚡</span>
+        <span class="logo-text">OpenAI Workflow</span>
+      </div>
+      <div class="header-actions">
+        <a href="http://opencode.local:4096" target="_blank" class="btn btn-secondary"
+          >🔧 OpenCode</a
+        >
+        <div class="health-status" id="healthStatus">
+          <span class="health-dot"></span>
+          <span class="health-text">Loading...</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-layout">
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-title">Tools</div>
+          <a href="#" class="nav-item active" data-tool="pump">
+            <span class="nav-icon">💧</span>
+            <span class="nav-label">Pump Controller</span>
+          </a>
+          <a href="#" class="nav-item" data-tool="manga">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Manga Crawler</span>
+          </a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-title">Quick Links</div>
+          <a href="/api" target="_blank" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-label">API Docs</span>
+          </a>
+          <a href="http://opencode.local:4096" target="_blank" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-label">OpenCode</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="content-area">
+        <!-- Pump Controller Tool -->
+        <section id="tool-pump" class="tool-panel active">
+          <div class="tool-header">
+            <h2>💧 Pump Controller</h2>
+            <div class="tool-actions">
+              <button class="btn btn-secondary" id="openEspLogsBtn">📟 ESP32 Logs</button>
+            </div>
+          </div>
+          <div class="dashboard">
+            <section class="pumps-section">
+              <div class="section-header">
+                <h3>Pumps</h3>
+                <div class="pump-menu">
+                  <button class="btn btn-icon" id="pumpMenuBtn">⋮</button>
+                  <div class="pump-menu-dropdown" id="pumpMenuDropdown">
+                    <button class="menu-item" id="newPumpBtn">+ New Pump</button>
+                  </div>
+                </div>
+              </div>
+              <div class="pumps-grid" id="pumpsGrid">
+                <div class="loading">Loading pumps...</div>
+              </div>
+              <div class="section-header" style="margin-top: 2rem">
+                <h3>Commands</h3>
+                <button class="btn btn-sm btn-secondary" id="refreshCommandsBtn">Refresh</button>
+              </div>
+              <div class="commands-grid" id="commandsGrid">
+                <div class="loading">Loading commands...</div>
+              </div>
+            </section>
+            <aside class="sidebar">
+              <div class="panel">
+                <h3>Today's Doses</h3>
+                <div id="todaysDoses">
+                  <div class="loading">Loading...</div>
+                </div>
+              </div>
+              <div class="panel">
+                <h3>Dose History</h3>
+                <div class="history-range-buttons">
+                  <button class="btn btn-sm" data-range="1d">1D</button>
+                  <button class="btn btn-sm" data-range="1m">1M</button>
+                  <button class="btn btn-sm" data-range="1y">1Y</button>
+                </div>
+                <div class="dose-chart-container">
+                  <canvas id="doseChart"></canvas>
+                </div>
+                <div class="history-table-wrapper">
+                  <table class="history-table" id="historyTable">
+                    <thead>
+                      <tr>
+                        <th>Time</th>
+                        <th>Volume</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td colspan="3" class="empty">Select a pump to view history</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <!-- Manga Crawler Tool -->
+        <section id="tool-manga" class="tool-panel">
+          <div class="tool-header">
+            <h2>📚 Manga Crawler</h2>
+            <div class="tool-actions">
+              <button class="btn btn-secondary" id="syncBookmarksBtn">🔄 Sync Bookmarks</button>
+              <button class="btn btn-secondary" id="checkNewChaptersBtn">
+                📊 Check New Chapters
+              </button>
+              <button class="btn btn-secondary" id="openLogsBtn">📜 Server Logs</button>
+            </div>
+          </div>
+          <div class="manga-dashboard">
+            <div class="manga-stats">
+              <div class="stat-card">
+                <div class="stat-value" id="totalManga">0</div>
+                <div class="stat-label">Total Manga</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="bookmarkedManga">0</div>
+                <div class="stat-label">Bookmarked</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="newChapters">0</div>
+                <div class="stat-label">New Chapters</div>
+              </div>
+            </div>
+            <div class="panel">
+              <h3>Your Manga Library</h3>
+              <div id="mangaLibrary">
+                <div class="loading">Loading manga library...</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Log Viewer Panel -->
+        <div class="log-viewer" id="logViewer">
+          <div class="log-header">
+            <h3>📜 Server Logs</h3>
+            <div class="log-controls">
+              <button class="btn btn-sm btn-secondary" id="clearLogsBtn">Clear</button>
+              <button class="btn btn-sm btn-secondary" id="pauseLogsBtn">Pause</button>
+              <button class="btn btn-sm btn-danger" id="closeLogsBtn">✕</button>
+            </div>
+          </div>
+          <div class="log-content" id="logContent">
+            <div class="log-empty">No logs yet...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Pump Modal -->
+    <div class="modal" id="pumpModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h3 id="modalTitle">New Pump</h3>
+        <form id="pumpForm">
+          <div class="form-group">
+            <label>Pump ID</label>
+            <input type="text" id="pumpId" pattern="[A-Za-z0-9_]+" maxlength="15" required />
+          </div>
+          <div class="form-group">
+            <label>Enabled</label>
+            <label class="toggle">
+              <input type="checkbox" id="pumpEnabled" />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Daily Volume (ml)</label>
+            <input type="number" id="dailyVolume" step="0.1" min="0" value="30" />
+          </div>
+          <div class="form-group">
+            <label>Day Start Hour (0-23)</label>
+            <input type="number" id="dayStartHour" min="0" max="23" value="8" />
+          </div>
+          <div class="form-group">
+            <label>Day End Hour (0-23)</label>
+            <input type="number" id="dayEndHour" min="0" max="23" value="20" />
+          </div>
+          <div class="form-group">
+            <label>Day Percent (%)</label>
+            <input type="number" id="dayPercent" min="0" max="100" value="70" />
+          </div>
+          <div class="form-group">
+            <label>Steps per ML</label>
+            <input type="number" id="stepsPerML" step="1" value="12800" />
+          </div>
+          <div class="form-group">
+            <label>Speed Profile (0=Slow, 1=Med, 2=Fast)</label>
+            <input type="number" id="activeProfile" min="0" max="2" value="1" />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancelPumpBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Calibration Modal -->
+    <div class="modal" id="calibrateModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <h3>🔧 Calibration</h3>
+        <div class="calibration-info">
+          <p><strong>Pump:</strong> <span id="calPumpId"></span></p>
+          <p><strong>Current Steps/mL:</strong> <span id="calCurrentSteps"></span></p>
+        </div>
+
+        <div class="calibration-tabs">
+          <button class="cal-tab active" data-tab="start">1. Start</button>
+          <button class="cal-tab" data-tab="measure">2. Measure</button>
+          <button class="cal-tab" data-tab="history">History</button>
+        </div>
+
+        <div class="cal-tab-content" id="calTabStart">
+          <p>
+            Click start to run 5ml calibration. The pump will dispense 5ml. After it completes,
+            measure the actual volume and save.
+          </p>
+          <button class="btn btn-primary" id="startCalBtn" onclick="window.startCalibration()">
+            Start 5ml Calibration
+          </button>
+          <div id="calCommandStatus" class="cal-status"></div>
+        </div>
+
+        <div class="cal-tab-content hidden" id="calTabMeasure">
+          <p>After calibration completes, measure the actual ml dispensed and enter below.</p>
+          <div class="form-group">
+            <label>Measured Volume (mL)</label>
+            <input type="number" id="calMeasuredML" step="0.1" min="0.1" placeholder="e.g. 4.8" />
+          </div>
+          <button class="btn btn-success" id="saveCalBtn" onclick="window.saveCalibration()">
+            Save to Pump (EEPROM)
+          </button>
+          <div id="calResult" class="cal-result"></div>
+        </div>
+
+        <div class="cal-tab-content hidden" id="calTabHistory">
+          <div id="calHistoryList" class="cal-history-list"></div>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="closeCalBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Compare Modal -->
+    <div class="modal" id="settingsCompareModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content modal-wide">
+        <h3>⚖️ Settings Compare — <span id="comparePumpId"></span></h3>
+        <div class="compare-status" id="compareStatus"></div>
+        <div class="compare-meta">
+          <span><strong>Last device sync:</strong> <span id="compareLastSync">Never</span></span>
+        </div>
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Server Value</th>
+              <th>Device Value</th>
+              <th>Match</th>
+            </tr>
+          </thead>
+          <tbody id="compareTableBody">
+            <tr>
+              <td colspan="4" class="loading">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="compare-actions">
+          <button type="button" class="btn btn-primary" id="useServerSettingsBtn">Use Server</button>
+          <button type="button" class="btn btn-secondary" id="useEepromSettingsBtn">Use EEPROM</button>
+          <button type="button" class="btn btn-secondary" id="closeCompareBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESP32 Serial Log Modal -->
+    <div class="modal" id="espLogModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content modal-wide">
+        <h3>📟 ESP32 Serial Logs</h3>
+        <div class="esp-status" id="espStatus"></div>
+        <div class="esp-log-content" id="espLogContent">
+          <div class="log-empty">Connecting to ESP32...</div>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-secondary" id="clearEspLogsBtn">Clear</button>
+          <button type="button" class="btn btn-secondary" id="closeEspLogBtn">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- Manga Detail Modal -->
+    <div class="modal" id="mangaModal">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content manga-modal-content">
+        <div class="manga-modal-header">
+          <img id="mangaDetailCover" class="manga-detail-cover" src="" alt="" />
+          <div class="manga-detail-info">
+            <h3 id="mangaDetailTitle">Manga Title</h3>
+            <p id="mangaDetailSource" class="manga-detail-source">Source: asurascans</p>
+            <div class="manga-detail-stats">
+              <span id="mangaDetailChapters">0 chapters</span>
+              <span id="mangaDetailBookmarked" class="bookmarked-badge">★ Bookmarked</span>
+            </div>
+          </div>
+          <button class="modal-close" id="closeMangaModal">✕</button>
+        </div>
+        <div class="manga-episodes">
+          <h4>Episodes</h4>
+          <div id="mangaEpisodesList">
+            <div class="loading">Loading episodes...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
