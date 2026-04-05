@@ -61,5 +61,7 @@ screenlog.0
 # MongoDB data (local dev)
 data/mongo/
 
+**/data/mongo/
+
 # TikTok downloads
 tiktok_download/
