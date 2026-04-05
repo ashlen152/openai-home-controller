@@ -280,10 +280,6 @@ void AutoDosingManager::updateSchedule() {
         return;
     }
     
-    // Regenerate schedule (in case volume changed)
-    generateWeightedSchedule(slots, scheduleMeta.totalDailyVolume, startHour, endHour, percent1, percent2);
-    
-    // Find next dosing time
     time_t now = time(nullptr);
     if (now <= 0) {
         AUTO_DOSING_LOG("WARN: Time not synced, cannot calculate next dose");
@@ -322,6 +318,14 @@ void AutoDosingManager::updateSchedule() {
 // CORE FUNCTION 3: checkAndDose()
 // ============================================================================
 
+static bool isTimeReadyForDosing(time_t now, time_t lastSyncTime, uint32_t lastSyncMillis) {
+    if (now > 946684800) return true;
+    if (lastSyncTime == 0) return false;
+    uint32_t elapsed = (millis() - lastSyncMillis) / 1000;
+    time_t fallback = lastSyncTime + elapsed;
+    return fallback > 1577836800;
+}
+
 void AutoDosingManager::checkAndDose() {
     // Early returns for edge cases
     if (!m_initialized) {
@@ -354,8 +358,16 @@ void AutoDosingManager::checkAndDose() {
         }
     }
     
-    // Check if time is synced, use fallback if WiFi down (Phase 3 Sprint 4)
     time_t now = time(nullptr);
+    if (!isTimeReadyForDosing(now, lastSyncTime, lastSyncMillis)) {
+        static unsigned long lastWarnTime = 0;
+        if (millis() - lastWarnTime > 60000) {
+            AUTO_DOSING_LOG("WARN: Time not ready for dosing - waiting for NTP sync");
+            lastWarnTime = millis();
+        }
+        return;
+    }
+    
     if (now <= 0) {
         // Fallback: Use millis() offset + last known time
         if (lastSyncTime > 0 && lastSyncMillis > 0) {

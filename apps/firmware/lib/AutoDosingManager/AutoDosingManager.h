@@ -29,6 +29,7 @@
 #include <EEPROM.h>
 #include "../PumpController/PumpController.h"
 #include <time.h>
+#include "../../include/Config.h"
 
 // Forward declarations to avoid circular dependency
 class DisplayManager;
@@ -166,11 +167,11 @@ private:
     float totalDosedVolume;
     Config eepromConfig;
     std::vector<DoseSchedule> schedule;
-    int slots = 48; // Default slots per day
-    int startHour = 11;
-    int endHour = 23;
-    float percent1 = 0.6f;
-    float percent2 = 0.4f;
+    int slots = ::Config::DEFAULT_SCHEDULE_SLOTS;
+    int startHour = ::Config::DEFAULT_DAY_START_HOUR;
+    int endHour = ::Config::DEFAULT_DAY_END_HOUR;
+    float percent1 = ::Config::DEFAULT_DAY_PERCENT / 100.0f;
+    float percent2 = (100 - ::Config::DEFAULT_DAY_PERCENT) / 100.0f;
     
     // Time sync fallback (Phase 3 Sprint 4)
     uint32_t lastSyncMillis;  ///< millis() when time was last synced

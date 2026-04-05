@@ -93,6 +93,10 @@ namespace Config
     // Auto Dosing Defaults
     // ==========================
     constexpr float DEFAULT_DAILY_VOLUME = 30.0f; // Default daily volume in mL
+    constexpr int DEFAULT_SCHEDULE_SLOTS = 48;
+    constexpr uint8_t DEFAULT_DAY_START_HOUR = 8;
+    constexpr uint8_t DEFAULT_DAY_END_HOUR = 20;
+    constexpr uint8_t DEFAULT_DAY_PERCENT = 70;
 
     // ==========================
     // Serial / Communication Pins
