@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { DoseEventsService } from '../services/dose-events.service';
 import { CreateDoseEventDto } from '../dto/create-dose-event.dto';
-import { DoseEvent } from '../schemas/dose-event.schema';
+import { DoseEvent, DoseEventStatus } from '../schemas/dose-event.schema';
 
 @Controller('dose-events')
 export class DoseEventsController {
@@ -27,19 +27,22 @@ export class DoseEventsController {
     doses: {
       eventId: string;
       timestamp: number;
+      dosingTimestamp: number | null;
       volume: number;
       status: string;
       success: boolean | null;
     }[];
   }> {
     const doses = await this.doseEventsService.getDoseHistory(pumpId);
+    const completedDoses = doses.filter((d: DoseEvent) => d.status === DoseEventStatus.COMPLETED);
     return {
       pumpId,
-      totalToday: doses.reduce((sum: number, dose: DoseEvent) => sum + dose.volume, 0),
-      doseCount: doses.length,
-      doses: doses.map((dose: DoseEvent) => ({
+      totalToday: completedDoses.reduce((sum: number, dose: DoseEvent) => sum + dose.volume, 0),
+      doseCount: completedDoses.length,
+      doses: completedDoses.map((dose: DoseEvent) => ({
         eventId: dose.eventId,
         timestamp: dose.timestamp,
+        dosingTimestamp: dose.dosingTimestamp ?? null,
         volume: dose.volume,
         status: dose.status,
         success: dose.success ?? null,
@@ -55,19 +58,22 @@ export class DoseEventsController {
     doses: {
       eventId: string;
       timestamp: number;
+      dosingTimestamp: number | null;
       volume: number;
       status: string;
       success: boolean | null;
     }[];
   }> {
     const doses = await this.doseEventsService.getTodaysDoses(pumpId);
+    const completedDoses = doses.filter((d: DoseEvent) => d.status === DoseEventStatus.COMPLETED);
     return {
       pumpId,
-      totalToday: doses.reduce((sum: number, dose: DoseEvent) => sum + dose.volume, 0),
-      doseCount: doses.length,
-      doses: doses.map((dose: DoseEvent) => ({
+      totalToday: completedDoses.reduce((sum: number, dose: DoseEvent) => sum + dose.volume, 0),
+      doseCount: completedDoses.length,
+      doses: completedDoses.map((dose: DoseEvent) => ({
         eventId: dose.eventId,
         timestamp: dose.timestamp,
+        dosingTimestamp: dose.dosingTimestamp ?? null,
         volume: dose.volume,
         status: dose.status,
         success: dose.success ?? null,

@@ -16,6 +16,10 @@ export class CreateDoseEventDto {
   @IsNumber()
   timestamp: number;
 
+  @IsOptional()
+  @IsNumber()
+  dosingTimestamp?: number | null;
+
   @IsNumber()
   @Min(0.01, { message: 'Volume must be greater than 0' })
   volume: number;

@@ -656,6 +656,36 @@
     }
   };
 
+  function mergeDoseEvents(events) {
+    const grouped = {};
+    events.forEach((e) => {
+      const key = `${e.timestamp}_${e.volume}`;
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(e);
+    });
+
+    const merged = [];
+    for (const [, group] of Object.entries(grouped)) {
+      const completed = group.find((e) => e.status === 'completed');
+      const started = group.find((e) => e.status === 'started');
+      const failed = group.find((e) => e.status === 'failed');
+
+      if (completed) {
+        merged.push({
+          ...completed,
+          combinedStatus: started ? 'started→completed' : 'completed',
+          combinedClass: started ? 'completed-started' : 'completed',
+        });
+      } else if (failed) {
+        merged.push({ ...failed, combinedStatus: started ? 'started→failed' : 'failed', combinedClass: started ? 'failed-started' : 'failed' });
+      } else if (started) {
+        merged.push({ ...started, combinedStatus: 'started', combinedClass: 'started' });
+      }
+    }
+
+    return merged.sort((a, b) => (b.dosingTimestamp || b.timestamp || 0) - (a.dosingTimestamp || a.timestamp || 0));
+  }
+
   function updateHistoryView() {
     const tbody = document.querySelector('#historyTable tbody');
     const now = Date.now();
@@ -669,24 +699,27 @@
     const filtered = _allEvents.filter((e) => (e.timestamp || 0) * 1000 >= cutoff);
 
     if (!filtered.length) {
-      tbody.innerHTML = '<tr><td colspan="3" class="empty">No dose history</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No dose history</td></tr>';
       renderDoseChart([]);
       return;
     }
 
-    tbody.innerHTML = filtered
+    const merged = mergeDoseEvents(filtered);
+
+    tbody.innerHTML = merged
       .slice(0, 50)
       .map(
         (e) => `
       <tr>
-        <td>${new Date((e.timestamp || 0) * 1000).toLocaleString()}</td>
+        <td>${new Date((e.dosingTimestamp || e.timestamp || 0) * 1000).toLocaleString()}</td>
         <td>${e.volume || 0}ml</td>
-        <td>${e.status || '-'}</td>
+        <td><span class="status-badge status-${e.combinedClass || e.status}">${e.combinedStatus || e.status || '-'}</span></td>
+        <td>${e.dosingTimestamp ? 'auto' : '-'}</td>
       </tr>
     `,
       )
       .join('');
-    renderDoseChart(filtered);
+    renderDoseChart(merged);
   }
 
   // Range button handlers
@@ -714,6 +747,7 @@
 
       const dailyData = {};
       sorted.forEach((e) => {
+        if (e.status !== 'completed') return;
         const date = new Date((e.timestamp || 0) * 1000).toLocaleDateString();
         dailyData[date] = (dailyData[date] || 0) + (e.volume || 0);
       });

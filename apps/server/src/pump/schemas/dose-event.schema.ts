@@ -20,6 +20,9 @@ export class DoseEvent {
   @Prop({ required: true })
   timestamp: number;
 
+  @Prop({ required: false, type: Number, nullable: true })
+  dosingTimestamp?: number | null;
+
   @Prop({ required: true })
   volume: number;
 
