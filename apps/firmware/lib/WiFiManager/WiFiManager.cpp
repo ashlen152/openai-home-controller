@@ -330,7 +330,7 @@ void WiFiManager::configureTime(const char *ntpServer, const char *timezone)
 
   Serial.println("Waiting for NTP time sync...");
   int retry = 0;
-  const int maxRetries = 15; // Increased retry attempts
+  const int maxRetries = 3;
 
   while (retry < maxRetries)
   {

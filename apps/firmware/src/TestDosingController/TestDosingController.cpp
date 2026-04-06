@@ -4,25 +4,26 @@
 
 static bool testDoseInProgress = false;
 static unsigned long testDoseStartTime = 0;
-static float testDoseVolume = 0;
+static long testDoseTargetSteps = 0;
 
 void startRemoteTestDose(long steps, int speed) {
     PumpController &pump = PumpController::getInstance();
     DisplayManager &display = DisplayManager::getInstance();
     
-    float ml = (float)steps / pump.getStepsPerML();
-    testDoseVolume = ml;
+    testDoseTargetSteps = steps;
     
-    Serial.printf("[TestDose] Starting: %.2f ml (%ld steps)\n", ml, steps);
+    Serial.printf("[TestDose] Starting: %ld steps (speed: %d)\n", steps, speed);
     
-    pump.moveML(ml);
+    pump.setMode(PumpMode::DOSING);
+    pump.enablePump();
+    pump.moveRelative(steps);
     
     testDoseInProgress = true;
     testDoseStartTime = millis();
     
     display.setState(DisplayManager::DisplayState::CALIBRATE_PROGRESS);
     char startText[64];
-    snprintf(startText, sizeof(startText), "Test Dose...\n%.2f ml", ml);
+    snprintf(startText, sizeof(startText), "Test Dose...\n%ld steps", steps);
     display.showText(startText);
 }
 
