@@ -256,12 +256,14 @@ private:
     // Background task timing
     unsigned long m_lastHealthCheck;
     unsigned long m_lastTimeSync;
+    unsigned long m_lastTimeSyncFailed;
     unsigned long m_lastWiFiCheck;
     unsigned long m_lastMidnightCheck;      // Midnight reset check
     uint8_t m_lastResetDay;                 // Track which day we last reset (1-31)
     
     static constexpr uint32_t HEALTH_CHECK_INTERVAL = 180000;  // 3 minutes
     static constexpr uint32_t TIME_SYNC_INTERVAL = 3600000;    // 1 hour
+    static constexpr uint32_t TIME_SYNC_RETRY_INTERVAL = 3000;
     static constexpr uint32_t WIFI_CHECK_INTERVAL = 5000;      // 5 seconds
     static constexpr uint32_t MIDNIGHT_CHECK_INTERVAL = 60000; // 1 minute
 };

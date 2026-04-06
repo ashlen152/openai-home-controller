@@ -186,6 +186,7 @@ private:
     DosingState dosingState;       ///< Current dosing operation state
     float pendingDoseVolume;       ///< Volume of dose currently in progress
     unsigned long dosingStartTime; ///< millis() when current dose started
+    uint32_t dosingTimestamp;     ///< Unix timestamp when dose started (for server storage)
     
     // Dose History (Phase 3 Sprint 6)
     static constexpr uint8_t DOSE_HISTORY_SIZE = 5;

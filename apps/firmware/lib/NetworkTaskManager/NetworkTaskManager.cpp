@@ -30,6 +30,7 @@ NetworkTaskManager::NetworkTaskManager()
     , m_running(false)
     , m_lastHealthCheck(0)
     , m_lastTimeSync(0)
+    , m_lastTimeSyncFailed(0)
     , m_lastWiFiCheck(0)
     , m_lastMidnightCheck(0)
     , m_lastResetDay(0)
@@ -321,15 +322,24 @@ void NetworkTaskManager::handleSyncTime()
         
         if (wifi.isConnected()) {
             wifi.syncTime();
-            response.status = NetworkStatus::TIME_SYNCED;
-            response.value = wifi.getCurrentTimeEpoch();
-            snprintf(response.data, sizeof(response.data), "Time synced");
-            Serial.println("[NetworkTask] Time synced successfully");
-            m_lastTimeSync = millis();
+            if (wifi.getCurrentTimeEpoch() > 24 * 3600) {
+                response.status = NetworkStatus::TIME_SYNCED;
+                response.value = wifi.getCurrentTimeEpoch();
+                snprintf(response.data, sizeof(response.data), "Time synced");
+                Serial.println("[NetworkTask] Time synced successfully");
+                m_lastTimeSync = millis();
+                m_lastTimeSyncFailed = 0;
+            } else {
+                response.status = NetworkStatus::FAILED;
+                snprintf(response.data, sizeof(response.data), "Time sync failed");
+                Serial.println("[NetworkTask] Time sync failed - will retry");
+                m_lastTimeSyncFailed = millis();
+            }
         } else {
             response.status = NetworkStatus::FAILED;
             snprintf(response.data, sizeof(response.data), "WiFi not connected");
             Serial.println("[NetworkTask] Cannot sync time - WiFi not connected");
+            m_lastTimeSyncFailed = millis();
         }
 
         xSemaphoreGive(m_wifiMutex);
@@ -536,8 +546,9 @@ void NetworkTaskManager::runBackgroundTasks() {
         }
     }
 
-    // Auto time sync every hour
-    if (now - m_lastTimeSync >= TIME_SYNC_INTERVAL) {
+    // Auto time sync every hour OR retry every 3 seconds if last attempt failed
+    if ((now - m_lastTimeSync >= TIME_SYNC_INTERVAL) || 
+        (m_lastTimeSyncFailed > 0 && now - m_lastTimeSyncFailed >= TIME_SYNC_RETRY_INTERVAL)) {
         Serial.println("[NetworkTask] Auto time sync triggered");
         handleSyncTime();
     }

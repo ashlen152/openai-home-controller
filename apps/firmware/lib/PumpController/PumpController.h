@@ -193,9 +193,8 @@ private:
   unsigned long holdDelay = 0;
   long lastPosition = 0;
 
-  // Calibration (default: 709.22 steps per mL, determined experimentally)
-  float peristalticStepsPerML = 709.22f;
-  float dosingStepsPerML = 709.22f;
+  float peristalticStepsPerML = 7642.0f;
+  float dosingStepsPerML = 7642.0f;
 
   // Speed
   float currentSpeed = 0;

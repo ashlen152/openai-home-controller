@@ -464,8 +464,13 @@ bool AutoDosingManager::performDosing(float volume) {
     pendingDoseVolume = volume;
     dosingStartTime = millis();
     
-    // Track day/night counts (for logging purposes)
     time_t now = time(nullptr);
+    if (now == (time_t)-1) {
+      now = lastSyncTime + ((millis() - lastSyncMillis) / 1000);
+    }
+    dosingTimestamp = (uint32_t)now;
+    
+    // Track day/night counts (for logging purposes)
     struct tm *timeinfo = localtime(&now);
     if (timeinfo->tm_hour >= scheduleMeta.dayStartHour && 
         timeinfo->tm_hour < scheduleMeta.dayEndHour) {
@@ -521,6 +526,7 @@ void AutoDosingManager::updateDosingProgress() {
         dosingState = DosingState::IDLE;
         pendingDoseVolume = 0.0f;
         dosingStartTime = 0;
+        dosingTimestamp = 0;
         return;  // Don't run timeout check after completion
     }
     
@@ -536,6 +542,7 @@ void AutoDosingManager::updateDosingProgress() {
         dosingState = DosingState::IDLE;
         pendingDoseVolume = 0.0f;
         dosingStartTime = 0;
+        dosingTimestamp = 0;
     }
 }
 
@@ -845,6 +852,7 @@ void AutoDosingManager::logDosingEvent(float volume, bool success, bool isStart)
     doc["pumpId"] = configMgr.getPumpId();
     doc["eventId"] = String(eventId);
     doc["timestamp"] = (unsigned long)now;
+    doc["dosingTimestamp"] = dosingTimestamp;
     doc["volume"] = volume;
     doc["status"] = isStart ? "started" : (success ? "completed" : "failed");
     
