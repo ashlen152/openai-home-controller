@@ -241,13 +241,26 @@ void AutoDosingManager::generateWeightedSchedule(int slots, float totalMl,
     float total1 = totalMl * percent1;  // Day volume (60%)
     float total2 = totalMl * percent2;  // Night volume (40%)
     
+    // Handle both normal period (e.g., 06:00-18:00) and wrap-around period
+    // (e.g., 22:00-06:00 crossing midnight).
+    const bool isWrapAroundPeriod = (endHour <= startHour);
+    auto isInDayPeriod = [&](int hour) {
+        if (!isWrapAroundPeriod) {
+            return hour >= startHour && hour < endHour;
+        }
+        return hour >= startHour || hour < endHour;
+    };
+
     // Count slots in each period
     int count1 = 0, count2 = 0;
     for (int i = 0; i < slots; i++) {
         int minutes = i * intervalMinutes;
         int h = minutes / 60;
-        if (h >= startHour && h < endHour) count1++;
-        else count2++;
+        if (isInDayPeriod(h)) {
+            count1++;
+        } else {
+            count2++;
+        }
     }
     
     // Calculate mL per dose for each period
@@ -260,7 +273,7 @@ void AutoDosingManager::generateWeightedSchedule(int slots, float totalMl,
         DoseSchedule entry;
         entry.hour = minutes / 60;
         entry.minute = minutes % 60;
-        entry.ml = (entry.hour >= startHour && entry.hour < endHour) ? mlPerDose1 : mlPerDose2;
+        entry.ml = isInDayPeriod(entry.hour) ? mlPerDose1 : mlPerDose2;
         entry.completed = false;
         schedule.push_back(entry);
     }

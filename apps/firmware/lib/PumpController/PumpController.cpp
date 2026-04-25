@@ -53,6 +53,8 @@ void PumpController::begin()
   
   // Load speed profiles from EEPROM (Phase 3 Sprint 7)
   loadSpeedProfiles();
+  // Apply active profile so stepper max speed matches persisted profile.
+  setSpeedProfile(activeProfile);
   
   // Load server-synced settings from EEPROM (Phase 4 Sprint 3)
   float serverStepsPerML = 0;
@@ -78,8 +80,7 @@ void PumpController::begin()
   uint8_t serverProfile = 0;
   EEPROM.get(::Config::EEPROM_SERVER_PROFILE_ADDR, serverProfile);
   if (serverProfile <= 2) {
-    activeProfile = serverProfile;
-    setSpeedProfile(activeProfile);
+    setSpeedProfile(serverProfile);
     Serial.printf("Loaded server speed profile from EEPROM: %d\n", serverProfile);
   }
 }
@@ -192,7 +193,11 @@ void PumpController::setCurrentPosition(int32_t position)
 
 void PumpController::setSpeed(float speed)
 {
-  currentSpeed = constrain(speed, 0.0f, stepper.maxSpeed() * 1.0f);
+  // Keep one source of truth for motion speed:
+  // - runPeristaltic() uses currentSpeed
+  // - runDosing()/AccelStepper::run() uses stepper maxSpeed
+  currentSpeed = constrain(speed, 0.0f, 50000.0f);
+  stepper.setMaxSpeed(currentSpeed);
 }
 
 bool PumpController::isRunning()
@@ -251,6 +256,9 @@ void PumpController::setProfileSpeed(uint8_t profile, float speed)
   // Clamp speed to reasonable range (1000 - 50000 steps/sec)
   speed = constrain(speed, 1000.0f, 50000.0f);
   speedProfiles[profile] = speed;
+  if (profile == activeProfile) {
+    setSpeed(speedProfiles[profile]);
+  }
   
   const char* profileNames[] = {"Slow", "Medium", "Fast"};
   Serial.printf("Profile %s speed set to %.0f steps/sec\n", profileNames[profile], speed);

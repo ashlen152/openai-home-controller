@@ -19,8 +19,8 @@
  * Step 4 - completeManualDosingController (DOSING_MANUAL_COMPLETE):
  *   Shows completion screen with total volume dispensed.
  *
- * @note Duration is set but not actually used to control pump speed.
- *       The pump runs at its configured speed regardless of duration setting.
+ * @note Duration is mapped to target dosing speed:
+ *       speed (steps/s) = (targetSteps) / (durationSeconds), clamped for safety.
  */
 
 #include "ManualDosingController.h"
@@ -32,6 +32,11 @@
 
 static float volume = 10.0; // Default volume for manual dosing
 static int duration = 1;
+
+static void restoreActiveProfileSpeed(PumpController &pump)
+{
+    pump.setSpeedProfile(pump.getActiveProfile());
+}
 
 void beginManualDosingController(bool isInManualBegin)
 {
@@ -109,6 +114,7 @@ void progressManualDosingController(bool isInManualProgress)
         {
             // Stop the pump and cancel dosing
             pump.stop();
+            restoreActiveProfileSpeed(pump);
             display.showText("Dosing\nCancelled");
             delay(1000);
             display.setState(DisplayManager::DisplayState::NORMAL);
@@ -121,15 +127,24 @@ void progressManualDosingController(bool isInManualProgress)
         }
         else
         {
-            float remainingVolume = (totalSteps - pump.getCurrentPosition()) / stepsPerML;
+            long currentSteps = abs(pump.getCurrentPosition());
+            float remainingVolume = (totalSteps - currentSteps) / stepsPerML;
+            if (remainingVolume < 0) {
+                remainingVolume = 0;
+            }
             display.setContextDosingManualProgress(volume, remainingVolume, wifi.getCurrentTime());
         }
     }
     else
     {
-
         float stepsPerML = pump.getDosingStepsPerML();
         const long targetSteps = volume * stepsPerML;
+        const float targetSeconds = max(duration, 1) * 60.0f;
+        const float targetSpeed = constrain(targetSteps / targetSeconds, 500.0f, 50000.0f);
+
+        // Manual mode now honors selected duration by mapping it to stepper max speed.
+        pump.setMaxSpeed(targetSpeed);
+        pump.setAcceleration(targetSpeed * 2.0f);
 
         pump.moveML(volume);
 
@@ -141,5 +156,7 @@ void progressManualDosingController(bool isInManualProgress)
 void completeManualDosingController(bool isInManualComplete)
 {
     DisplayManager &display = DisplayManager::getInstance();
+    PumpController &pump = PumpController::getInstance();
+    restoreActiveProfileSpeed(pump);
     display.setState(DisplayManager::DisplayState::DOSING_MANUAL_COMPLETE);
 }
