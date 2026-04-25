@@ -34,9 +34,10 @@
 static float volume = 10.0; // Default volume for manual dosing
 static int duration = 1;
 
-static void restoreActiveProfileSpeed(PumpController &pump)
+static void restoreActiveProfileMotion(PumpController &pump)
 {
     pump.setSpeedProfile(pump.getActiveProfile());
+    pump.setAcceleration(::Config::ACCELERATION);
 }
 
 void beginManualDosingController(bool isInManualBegin)
@@ -115,7 +116,7 @@ void progressManualDosingController(bool isInManualProgress)
         {
             // Stop the pump and cancel dosing
             pump.stop();
-            restoreActiveProfileSpeed(pump);
+            restoreActiveProfileMotion(pump);
             display.showText("Dosing\nCancelled");
             delay(1000);
             display.setState(DisplayManager::DisplayState::NORMAL);
@@ -124,7 +125,7 @@ void progressManualDosingController(bool isInManualProgress)
         float stepsPerML = pump.getDosingStepsPerML();
         if (stepsPerML <= 0.0f) {
             pump.stop();
-            restoreActiveProfileSpeed(pump);
+            restoreActiveProfileMotion(pump);
             display.showText("Invalid\nCalibration");
             delay(1000);
             display.setState(DisplayManager::DisplayState::NORMAL);
@@ -175,6 +176,6 @@ void completeManualDosingController(bool isInManualComplete)
 {
     DisplayManager &display = DisplayManager::getInstance();
     PumpController &pump = PumpController::getInstance();
-    restoreActiveProfileSpeed(pump);
+    restoreActiveProfileMotion(pump);
     display.setState(DisplayManager::DisplayState::DOSING_MANUAL_COMPLETE);
 }
