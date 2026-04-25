@@ -19,9 +19,10 @@ bool ApiClient::init() {
     if (_httpClient != nullptr) {
         delete _httpClient;
     }
-    _httpClient = new HttpClient(_wifiClient, _serverAddress.c_str(), _port);
+    
+    _httpClient = new HttpClient(_wifiClient, _serverAddress, _port);
     _httpClient->setTimeout(HTTP_TIMEOUT);
-    Serial.printf("[ApiClient] Initialized: %s:%d\n", _serverAddress.c_str(), _port);
+    Serial.printf("[ApiClient] Initialized: %s:%d\n", _serverAddress, _port);
     return true;
 }
 
@@ -47,35 +48,25 @@ JsonDocument ApiClient::parseResponse(const String& response) {
 
 JsonDocument ApiClient::get(const char* path) {
     JsonDocument result;
-    
+
     if (!ensureConnected()) {
         result["success"] = false;
         result["error"] = "WiFi not connected";
         return result;
     }
-    
+
     Serial.printf("[ApiClient] GET %s\n", path);
-    
-    unsigned long startTime = millis();
+
     _httpClient->beginRequest();
     _httpClient->get(path);
     _httpClient->endRequest();
-    
-    while (!_httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
-        delay(10);
-    }
-    
-    if ((millis() - startTime) >= HTTP_TIMEOUT) {
-        result["success"] = false;
-        result["error"] = "Request timeout";
-        return result;
-    }
-    
+
+    // responseStatusCode() blocks until response is received or timeout
     int httpCode = _httpClient->responseStatusCode();
     String response = _httpClient->responseBody();
-    
+
     Serial.printf("[ApiClient] GET HTTP %d\n", httpCode);
-    
+
     if (httpCode > 0 && httpCode < 400) {
         result["success"] = true;
         result["httpCode"] = httpCode;
@@ -86,45 +77,35 @@ JsonDocument ApiClient::get(const char* path) {
         result["httpCode"] = httpCode;
         result["error"] = response;
     }
-    
+
     return result;
 }
 
 JsonDocument ApiClient::post(const char* path, const JsonDocument& payload) {
     JsonDocument result;
-    
+
     if (!ensureConnected()) {
         result["success"] = false;
         result["error"] = "WiFi not connected";
         return result;
     }
-    
+
     Serial.printf("[ApiClient] POST %s\n", path);
-    
+
     String body;
     serializeJson(payload, body);
     Serial.printf("[ApiClient] Payload: %s\n", body.c_str());
-    
-    unsigned long startTime = millis();
+
     _httpClient->beginRequest();
     _httpClient->post(path, "application/json", body.c_str());
     _httpClient->endRequest();
-    
-    while (!_httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
-        delay(10);
-    }
-    
-    if ((millis() - startTime) >= HTTP_TIMEOUT) {
-        result["success"] = false;
-        result["error"] = "Request timeout";
-        return result;
-    }
-    
+
+    // responseStatusCode() blocks until response is received or timeout
     int httpCode = _httpClient->responseStatusCode();
     String response = _httpClient->responseBody();
-    
+
     Serial.printf("[ApiClient] POST HTTP %d\n", httpCode);
-    
+
     if (httpCode > 0 && httpCode < 400) {
         result["success"] = true;
         result["httpCode"] = httpCode;
@@ -135,42 +116,32 @@ JsonDocument ApiClient::post(const char* path, const JsonDocument& payload) {
         result["httpCode"] = httpCode;
         result["error"] = response;
     }
-    
+
     return result;
 }
 
 JsonDocument ApiClient::put(const char* path, const JsonDocument& payload) {
     JsonDocument result;
-    
+
     if (!ensureConnected()) {
         result["success"] = false;
         result["error"] = "WiFi not connected";
         return result;
     }
-    
+
     Serial.printf("[ApiClient] PUT %s\n", path);
-    
+
     String body;
     serializeJson(payload, body);
-    
-    unsigned long startTime = millis();
+
     _httpClient->beginRequest();
     _httpClient->put(path, "application/json", body.c_str());
     _httpClient->endRequest();
-    
-    while (!_httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
-        delay(10);
-    }
-    
-    if ((millis() - startTime) >= HTTP_TIMEOUT) {
-        result["success"] = false;
-        result["error"] = "Request timeout";
-        return result;
-    }
-    
+
+    // responseStatusCode() blocks until response is received or timeout
     int httpCode = _httpClient->responseStatusCode();
     String response = _httpClient->responseBody();
-    
+
     if (httpCode > 0 && httpCode < 400) {
         result["success"] = true;
         result["httpCode"] = httpCode;
@@ -181,7 +152,7 @@ JsonDocument ApiClient::put(const char* path, const JsonDocument& payload) {
         result["httpCode"] = httpCode;
         result["error"] = response;
     }
-    
+
     return result;
 }
 
@@ -189,23 +160,16 @@ bool ApiClient::del(const char* path) {
     if (!ensureConnected()) {
         return false;
     }
-    
+
     Serial.printf("[ApiClient] DELETE %s\n", path);
-    
-    unsigned long startTime = millis();
+
     _httpClient->beginRequest();
     _httpClient->del(path);
     _httpClient->endRequest();
-    
-    while (!_httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
-        delay(10);
-    }
-    
-    if ((millis() - startTime) >= HTTP_TIMEOUT) {
-        return false;
-    }
-    
+
+    // responseStatusCode() blocks until response is received or timeout
     int httpCode = _httpClient->responseStatusCode();
+
     return httpCode > 0 && httpCode < 400;
 }
 
@@ -264,22 +228,14 @@ bool ApiClient::updatePumpSettingsRaw(const char* jsonPayload) {
     Serial.printf("[ApiClient] POST SETTINGS URL: %s\n", fullUrl.c_str());
     Serial.printf("[ApiClient] POST SETTINGS Payload: %s\n", jsonPayload);
 
-    unsigned long startTime = millis();
     _httpClient->beginRequest();
     _httpClient->post(path, "application/json", jsonPayload);
     _httpClient->endRequest();
 
-    while (!_httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
-        delay(10);
-    }
-
-    if ((millis() - startTime) >= HTTP_TIMEOUT) {
-        Serial.println("[ApiClient] POST SETTINGS timeout");
-        return false;
-    }
-
+    // responseStatusCode() blocks until response is received or timeout
     int httpCode = _httpClient->responseStatusCode();
     String response = _httpClient->responseBody();
+
     Serial.printf("[ApiClient] POST SETTINGS HTTP %d\n", httpCode);
 
     if (httpCode > 0 && httpCode < 400) {

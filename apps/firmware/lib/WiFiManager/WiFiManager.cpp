@@ -1,44 +1,39 @@
-
 #include "WiFiManager.h"
-#include <DisplayManager.h>
-#include <ConfigManager.h>
 #include "../../include/WifiConfig.h"
+#include <ConfigManager.h>
+#include <DisplayManager.h>
 
-WiFiManager::WiFiManager()
-  : _serverAddress(serverAddress), _port(serverPort)
-{
+WiFiManager::WiFiManager() : _serverAddress(serverAddress), _port(serverPort) {
   Serial.printf("[WiFiManager] Server: %s:%d\n", _serverAddress.c_str(), _port);
 }
 
-WiFiManager &WiFiManager::getInstance()
-{
+WiFiManager &WiFiManager::getInstance() {
   static WiFiManager instance;
   return instance;
 }
 
-WiFiManager::~WiFiManager()
-{
-  disconnect();
-}
+WiFiManager::~WiFiManager() { disconnect(); }
 
-bool WiFiManager::connect(char const *ssid, char const *password)
-{
+bool WiFiManager::connect(char const *ssid, char const *password) {
   Serial.printf("[WiFi] Connecting to SSID: '%s'\n", ssid);
   Serial.printf("[WiFi] Password length: %d\n", strlen(password));
-  
+
+  WiFi.config(WiFi.localIP(), WiFi.gatewayIP(), WiFi.subnetMask(),
+              IPAddress(8, 8, 8, 8), // Primary DNS (Google)
+              IPAddress(8, 8, 4, 4)  // Secondary DNS
+  );
   WiFi.begin(ssid, password);
 
   DisplayManager::getInstance().showText("Connecting to WiFi...");
 
   int attempts = 0;
-  while (WiFi.status() != WL_CONNECTED && attempts < MAX_ATTEMPTS)
-  {
+  while (WiFi.status() != WL_CONNECTED && attempts < MAX_ATTEMPTS) {
     delay(500);
-    Serial.printf("[WiFi] Attempt %d/%d, Status: %d\n", attempts+1, MAX_ATTEMPTS, WiFi.status());
-    
+    Serial.printf("[WiFi] Attempt %d/%d, Status: %d\n", attempts + 1,
+                  MAX_ATTEMPTS, WiFi.status());
+
     String dots = ".";
-    for (int i = 0; i < (attempts % 4) + 1; i++)
-    {
+    for (int i = 0; i < (attempts % 4) + 1; i++) {
       dots += ".";
     }
 
@@ -47,13 +42,10 @@ bool WiFiManager::connect(char const *ssid, char const *password)
     attempts++;
   }
 
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    if (httpClient == nullptr)
-    {
+  if (WiFi.status() == WL_CONNECTED) {
+    if (httpClient == nullptr) {
       httpClient = new HttpClient(wifiClient, _serverAddress.c_str(), _port);
-      if (httpClient == nullptr)
-      {
+      if (httpClient == nullptr) {
         Serial.println("Failed to create HttpClient");
         return false;
       }
@@ -63,29 +55,33 @@ bool WiFiManager::connect(char const *ssid, char const *password)
     int rssi = getSignalStrength();
     String signalIndicator = "Signal: " + String(rssi) + " dBm";
     String signalStatus = (rssi < MIN_RSSI) ? "Weak Signal" : "Good Signal";
-    std::vector<String> lines = {"", "Connected!", "IP: " + String(WiFi.localIP()), signalIndicator, signalStatus};
+    std::vector<String> lines = {"", "Connected!",
+                                 "IP: " + String(WiFi.localIP()),
+                                 signalIndicator, signalStatus};
     DisplayManager::getInstance().showText(lines);
     delay(2000);
+
+    Serial.println("[WiFiManager] Checking server health...");
+    bool serverHealthy = checkApiHealth();
+    if (serverHealthy) {
+      Serial.println("[WiFiManager] Server is healthy");
+    } else {
+      Serial.println("[WiFiManager] Server unreachable - continuing anyway");
+    }
+
     return true;
-  }
-  else
-  {
+  } else {
     DisplayManager::getInstance().showText("Failed to connect to WiFi");
     delay(1000);
     return false;
   }
 }
 
-bool WiFiManager::isConnected()
-{
-  return WiFi.status() == WL_CONNECTED;
-}
+bool WiFiManager::isConnected() { return WiFi.status() == WL_CONNECTED; }
 
-void WiFiManager::disconnect()
-{
+void WiFiManager::disconnect() {
   WiFi.disconnect();
-  if (httpClient != nullptr)
-  {
+  if (httpClient != nullptr) {
     delete httpClient;
     httpClient = nullptr;
   }
@@ -93,27 +89,21 @@ void WiFiManager::disconnect()
   delay(1000);
 }
 
-int WiFiManager::getSignalStrength()
-{
-  if (isConnected())
-  {
+int WiFiManager::getSignalStrength() {
+  if (isConnected()) {
     int rssi = WiFi.RSSI();
     Serial.print("Signal Strength: ");
     Serial.println(rssi);
     return rssi;
-  }
-  else
-  {
+  } else {
     Serial.println("Not connected to WiFi");
     return -1;
   }
 }
 
 // GET request
-bool WiFiManager::get(const char *path, String &response)
-{
-  if (!isConnected())
-  {
+bool WiFiManager::get(const char *path, String &response) {
+  if (!isConnected()) {
     Serial.println("Cannot perform GET: Not connected to WiFi");
     return false;
   }
@@ -127,18 +117,21 @@ bool WiFiManager::get(const char *path, String &response)
   httpClient->get(path);
   httpClient->endRequest();
 
-  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT)
-  {
-    delay(10);
+  int httpCode = -1;
+  while ((millis() - startTime) < HTTP_TIMEOUT) {
+    httpCode = httpClient->responseStatusCode();
+    if (httpCode != 0)
+      break;
+
+    vTaskDelay(pdMS_TO_TICKS(10)); // RTOS-friendly
   }
 
-  if ((millis() - startTime) >= HTTP_TIMEOUT)
-  {
-    Serial.println("[WiFiManager] GET request timed out");
+  if (httpCode == 0) {
+    Serial.println("[WiFiManager] No response (timeout)");
+    httpClient->stop();
     return false;
   }
 
-  int httpCode = httpClient->responseStatusCode();
   response = httpClient->responseBody();
 
   Serial.print("[WiFiManager] HTTP Code: ");
@@ -146,23 +139,15 @@ bool WiFiManager::get(const char *path, String &response)
   Serial.print("[WiFiManager] Response: ");
   Serial.println(response);
 
-  if (httpCode > 0 && httpCode < 400)
-  {
-    return true;
-  }
-  else
-  {
-    Serial.print("[WiFiManager] GET failed with code: ");
-    Serial.println(httpCode);
-    return false;
-  }
+  httpClient->stop();
+
+  return (httpCode > 0 && httpCode < 400);
 }
 
 // POST request
-bool WiFiManager::post(const char *path, const char *contentType, const char *body, String &response)
-{
-  if (!isConnected())
-  {
+bool WiFiManager::post(const char *path, const char *contentType,
+                       const char *body, String &response) {
+  if (!isConnected()) {
     Serial.println("Cannot perform POST: Not connected to WiFi");
     return false;
   }
@@ -177,13 +162,11 @@ bool WiFiManager::post(const char *path, const char *contentType, const char *bo
   httpClient->endRequest();
 
   // Wait for the response with a timeout
-  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT)
-  {
+  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
     delay(10); // Small delay to avoid busy-waiting
   }
 
-  if ((millis() - startTime) >= HTTP_TIMEOUT)
-  {
+  if ((millis() - startTime) >= HTTP_TIMEOUT) {
     Serial.println("POST request timed out");
     return false;
   }
@@ -198,9 +181,7 @@ bool WiFiManager::post(const char *path, const char *contentType, const char *bo
     Serial.print("Response: ");
     Serial.println(response);
     return true;
-  }
-  else
-  {
+  } else {
     Serial.print("POST failed with code: ");
     Serial.println(httpCode);
     return false;
@@ -208,10 +189,9 @@ bool WiFiManager::post(const char *path, const char *contentType, const char *bo
 }
 
 // PUT request
-bool WiFiManager::put(const char *path, const char *contentType, const char *body, String &response)
-{
-  if (!isConnected())
-  {
+bool WiFiManager::put(const char *path, const char *contentType,
+                      const char *body, String &response) {
+  if (!isConnected()) {
     Serial.println("Cannot perform PUT: Not connected to WiFi");
     return false;
   }
@@ -226,13 +206,11 @@ bool WiFiManager::put(const char *path, const char *contentType, const char *bod
   httpClient->endRequest();
 
   // Wait for the response with a timeout
-  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT)
-  {
+  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
     delay(10); // Small delay to avoid busy-waiting
   }
 
-  if ((millis() - startTime) >= HTTP_TIMEOUT)
-  {
+  if ((millis() - startTime) >= HTTP_TIMEOUT) {
     Serial.println("PUT request timed out");
     return false;
   }
@@ -247,9 +225,7 @@ bool WiFiManager::put(const char *path, const char *contentType, const char *bod
     Serial.print("Response: ");
     Serial.println(response);
     return true;
-  }
-  else
-  {
+  } else {
     Serial.print("PUT failed with code: ");
     Serial.println(httpCode);
     return false;
@@ -257,10 +233,8 @@ bool WiFiManager::put(const char *path, const char *contentType, const char *bod
 }
 
 // DELETE request
-bool WiFiManager::del(const char *path, String &response)
-{
-  if (!isConnected())
-  {
+bool WiFiManager::del(const char *path, String &response) {
+  if (!isConnected()) {
     Serial.println("Cannot perform DELETE: Not connected to WiFi");
     return false;
   }
@@ -275,13 +249,11 @@ bool WiFiManager::del(const char *path, String &response)
   httpClient->endRequest();
 
   // Wait for the response with a timeout
-  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT)
-  {
+  while (!httpClient->available() && (millis() - startTime) < HTTP_TIMEOUT) {
     delay(10); // Small delay to avoid busy-waiting
   }
 
-  if ((millis() - startTime) >= HTTP_TIMEOUT)
-  {
+  if ((millis() - startTime) >= HTTP_TIMEOUT) {
     Serial.println("DELETE request timed out");
     return false;
   }
@@ -296,9 +268,7 @@ bool WiFiManager::del(const char *path, String &response)
     Serial.print("Response: ");
     Serial.println(response);
     return true;
-  }
-  else
-  {
+  } else {
     Serial.print("DELETE failed with code: ");
     Serial.println(httpCode);
     return false;
@@ -306,124 +276,126 @@ bool WiFiManager::del(const char *path, String &response)
 }
 
 // Legacy health check method
-bool WiFiManager::checkApiHealth()
-{
-  Serial.printf("[WiFiManager] checkApiHealth to %s:%d\n", _serverAddress.c_str(), _port);
+bool WiFiManager::checkApiHealth() {
+  Serial.printf("[WiFiManager] checkApiHealth to %s:%d\n",
+                _serverAddress.c_str(), _port);
   String response;
   return get("/api/health", response);
 }
 
 char WiFiManager::timeStr[9] = "00:00:00";
 
-void WiFiManager::configureTime(const char *ntpServer, const char *timezone)
-{
-  // Configure multiple NTP servers with Asia region priority
-  const char *servers[] = {
-      "asia.pool.ntp.org",   // Asia NTP pool
-      "sg.pool.ntp.org",     // Singapore NTP pool
-      "3.asia.pool.ntp.org", // Asia pool server 3
-      "2.asia.pool.ntp.org"  // Asia pool server 2
-  };
+void WiFiManager::configureTime(const char *timezone) {
+  const char *servers[] = {"time.google.com", "time.cloudflare.com",
+                           "asia.pool.ntp.org", "pool.ntp.org"};
 
-  // Set timezone to ICT/Vietnam (UTC+7)
-  configTzTime("ICT-7", servers[0], servers[1], servers[2]);
+  const int numServers = 4;
 
-  Serial.println("Waiting for NTP time sync...");
-  int retry = 0;
-  const int maxRetries = 3;
+  Serial.println("Starting NTP sync...");
 
-  while (retry < maxRetries)
-  {
-    time_t now = time(nullptr);
-    if (now > 24 * 3600)
-    { // Valid time received
-      timeInitialized = true;
-      lastTimeSync = millis();
-      lastSyncedTime = now;
-      lastTimeUpdate = millis();
+  // Give WiFi stack time (important)
+  delay(3000);
 
+  for (int s = 0; s < numServers; s++) {
+    Serial.printf("\nTrying NTP server: %s\n", servers[s]);
+
+    // Rotate 3 servers per attempt (more reliable)
+    configTzTime(timezone, servers[s], servers[(s + 1) % numServers],
+                 servers[(s + 2) % numServers]);
+
+    delay(2000); // allow DNS + SNTP start
+
+    bool success = false;
+
+    for (int retry = 0; retry < 10; retry++) {
       struct tm timeinfo;
-      if (getLocalTime(&timeinfo))
-      {
-        Serial.printf("Time synchronized: %02d:%02d:%02d\n",
-                      timeinfo.tm_hour,
-                      timeinfo.tm_min,
-                      timeinfo.tm_sec);
-        return;
+
+      if (getLocalTime(&timeinfo)) {
+        Serial.printf("✅ Time OK from %s: %02d:%02d:%02d\n", servers[s],
+                      timeinfo.tm_hour, timeinfo.tm_min, timeinfo.tm_sec);
+
+        success = true;
+        break;
       }
+
+      Serial.print(".");
+      delay(1000);
     }
 
-    // If first server fails, try next one
-    if (retry % 5 == 4)
-    { // After every 5 attempts
-      int serverIndex = (retry / 5) % 4;
-      if (serverIndex < 3)
-      { // We have 4 servers
-        Serial.printf("Trying alternate NTP server: %s\n", servers[serverIndex + 1]);
-        configTzTime("ICT-7", servers[serverIndex + 1]);
-      }
+    if (success) {
+      timeInitialized = true;
+      return; // exit function when synced
     }
 
-    Serial.print(".");
-    delay(1000);
-    retry++;
+    Serial.println("\n❌ Failed, switching server...");
   }
 
-  Serial.println("\nTime sync failed!");
+  Serial.println("\n🚨 All NTP servers failed!");
 }
 
-const char *WiFiManager::getCurrentTime()
-{
-  if (!isConnected() || !timeInitialized)
-  {
+// Non-blocking time sync start (Phase 5)
+void WiFiManager::startTimeSync() {
+  if (!isConnected()) {
+    Serial.println("[WiFi] Cannot start time sync - WiFi not connected");
+    return;
+  }
+
+  Serial.println("[WiFi] Start NTP sync (non-blocking)");
+  timeInitialized = false;
+  m_timeState = TIME_SYNCING;
+  m_syncStartMillis = millis();
+  m_currentServerIndex = 0;
+
+  // Configure with first server immediately (no delay)
+  configTzTime("ICT-7", _ntpServers[0], _ntpServers[1], _ntpServers[2]);
+}
+
+// Non-blocking time sync process (Phase 5)
+void WiFiManager::processTimeSync() {
+  // Only process if we're in syncing state
+  if (m_timeState != TIME_SYNCING)
+    return;
+
+  struct tm timeinfo;
+
+  // Try to get local time - if successful, we're synced!
+  if (getLocalTime(&timeinfo)) {
+    timeInitialized = true;
+    m_timeState = TIME_SYNCED;
+    lastSyncedTime = time(nullptr);
+    lastTimeUpdate = millis();
+
+    Serial.printf("[WiFi] Time synced: %02d:%02d:%02d\n", timeinfo.tm_hour,
+                  timeinfo.tm_min, timeinfo.tm_sec);
+    return;
+  }
+
+  // Timeout check: 10 seconds max
+  if (millis() - m_syncStartMillis > 10000) {
+    Serial.println("[WiFi] Time sync timeout");
+    m_timeState = TIME_FAILED;
+  }
+}
+
+const char *WiFiManager::getCurrentTime() {
+  if (!isConnected() || !timeInitialized) {
     return "00:00:00";
   }
 
   struct tm timeinfo;
-  if (!getLocalTime(&timeinfo))
-  {
+  if (!getLocalTime(&timeinfo)) {
     Serial.println("Failed to get local time");
-
-    // Try to re-sync if we can't get the time
-    unsigned long currentMillis = millis();
-    if (currentMillis - lastTimeSync >= TIME_SYNC_INTERVAL)
-    {
-      Serial.println("Attempting time re-sync...");
-      configTzTime("ICT-7", "pool.ntp.org", "time.nist.gov");
-      delay(100); // Brief delay to allow sync
-
-      if (getLocalTime(&timeinfo))
-      {
-        lastTimeSync = currentMillis;
-        lastSyncedTime = time(nullptr);
-        lastTimeUpdate = currentMillis;
-        Serial.println("Time re-sync successful");
-      }
-      else
-      {
-        Serial.println("Time re-sync failed");
-      }
-    }
-
     return "00:00:00";
   }
 
-  // Update time string if a second has passed
   unsigned long currentMillis = millis();
-  if (currentMillis - lastTimeUpdate >= TIME_UPDATE_INTERVAL)
-  {
-    sprintf(timeStr, "%02d:%02d:%02d",
-            timeinfo.tm_hour,
-            timeinfo.tm_min,
-            timeinfo.tm_sec);
-    lastTimeUpdate = currentMillis;
 
-    // Periodically sync with NTP (every hour)
-    if (currentMillis - lastTimeSync >= TIME_SYNC_INTERVAL)
-    {
-      lastTimeSync = currentMillis;
-      lastSyncedTime = time(nullptr);
-    }
+  // Update once per second
+  if (currentMillis - lastTimeUpdate >= TIME_UPDATE_INTERVAL) {
+    snprintf(timeStr, sizeof(timeStr), "%02d:%02d:%02d", timeinfo.tm_hour,
+             timeinfo.tm_min, timeinfo.tm_sec);
+
+    lastTimeUpdate = currentMillis;
   }
 
   return timeStr;
@@ -431,86 +403,74 @@ const char *WiFiManager::getCurrentTime()
 
 // High-level methods for NetworkTaskManager
 
-bool WiFiManager::connect()
-{
+bool WiFiManager::connect() {
   // Use credentials from WifiConfig.h
   return connect(ssid, password);
 }
 
-void WiFiManager::syncTime()
-{
-  configureTime("asia.pool.ntp.org", "ICT-7");
-}
+void WiFiManager::syncTime() { configureTime("ICT-7"); }
 
-time_t WiFiManager::getCurrentTimeEpoch()
-{
-  return time(nullptr);
-}
+time_t WiFiManager::getCurrentTimeEpoch() { return time(nullptr); }
 
-bool WiFiManager::postDoseLog(const String &payload)
-{
+bool WiFiManager::postDoseLog(const String &payload) {
   String response;
   // Phase 4: Updated endpoint for dose events (start/complete/failed)
-  const char* DOSE_LOG_API = "/api/dose-events";
-  bool success = post(DOSE_LOG_API, "application/json", payload.c_str(), response);
-  
+  const char *DOSE_LOG_API = "/api/dose-events";
+  bool success =
+      post(DOSE_LOG_API, "application/json", payload.c_str(), response);
+
   if (success) {
     Serial.println("[WiFiManager] Dose event posted successfully");
     Serial.print("[WiFiManager] Payload: ");
     Serial.println(payload);
   } else {
-    Serial.println("[WiFiManager] Failed to post dose event (mockup - server may not exist)");
+    Serial.println("[WiFiManager] Failed to post dose event (mockup - server "
+                   "may not exist)");
   }
-  
+
   return success;
 }
 
-bool WiFiManager::checkServerHealth()
-{
-  return checkApiHealth();
-}
+bool WiFiManager::checkServerHealth() { return checkApiHealth(); }
 
-bool WiFiManager::getPumpSettings(String &response)
-{
+bool WiFiManager::getPumpSettings(String &response) {
   Serial.println("[WiFiManager] getPumpSettings() - fetching from server");
-  
+
   char path[64];
-  const char* pumpId = ConfigManager::getInstance().getPumpId();
+  const char *pumpId = ConfigManager::getInstance().getPumpId();
   snprintf(path, sizeof(path), "/api/pump-settings/%s", pumpId);
-  
+
   bool success = get(path, response);
-  
+
   if (success) {
     Serial.println("[WiFiManager] Settings fetched successfully");
   } else {
     Serial.println("[WiFiManager] Failed to get settings from server");
     response = "";
   }
-  
+
   return success;
 }
 
 // Phase 4: Mockup POST pump settings
-bool WiFiManager::updatePumpSettings(const String &payload)
-{
+bool WiFiManager::updatePumpSettings(const String &payload) {
   Serial.println("[WiFiManager] updatePumpSettings() - MOCKUP");
   Serial.print("[WiFiManager] Payload: ");
   Serial.println(payload);
   Serial.println("[WiFiManager] Mockup: Settings would be saved to server");
-  
+
   return true;
 }
 
-bool WiFiManager::getCommands(String &response)
-{
+bool WiFiManager::getCommands(String &response) {
   Serial.println("[WiFiManager] getCommands()");
-  
+
   char path[64];
-  const char* pumpId = ConfigManager::getInstance().getPumpId();
+  const char *pumpId = ConfigManager::getInstance().getPumpId();
   snprintf(path, sizeof(path), "/api/pump-commands/%s", pumpId);
-  
+
   bool success = get(path, response);
-  
+
   if (success) {
     Serial.println("[WiFiManager] Commands fetched successfully");
     Serial.print("[WiFiManager] Response: ");
@@ -519,21 +479,20 @@ bool WiFiManager::getCommands(String &response)
     Serial.println("[WiFiManager] Failed to get commands");
     response = "[]";
   }
-  
+
   return success;
 }
 
-bool WiFiManager::completeCommand(const String &payload)
-{
+bool WiFiManager::completeCommand(const String &payload) {
   Serial.println("[WiFiManager] completeCommand()");
-  
+
   char path[64];
-  const char* pumpId = ConfigManager::getInstance().getPumpId();
+  const char *pumpId = ConfigManager::getInstance().getPumpId();
   snprintf(path, sizeof(path), "/api/pump-commands/%s/complete", pumpId);
-  
+
   String response;
   bool success = post(path, "application/json", payload.c_str(), response);
-  
+
   if (success) {
     Serial.println("[WiFiManager] Command completion posted successfully");
     Serial.print("[WiFiManager] Response: ");
@@ -541,6 +500,6 @@ bool WiFiManager::completeCommand(const String &payload)
   } else {
     Serial.println("[WiFiManager] Failed to post command completion");
   }
-  
+
   return success;
 }

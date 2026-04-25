@@ -309,7 +309,7 @@ void NetworkTaskManager::handleDisconnectWiFi() {
     sendResponse(response);
 }
 
-// Handle NTP time sync command
+// Handle NTP time sync command (non-blocking - Phase 5)
 void NetworkTaskManager::handleSyncTime()
 {
     NetworkResponseMessage response;
@@ -321,20 +321,14 @@ void NetworkTaskManager::handleSyncTime()
         WiFiManager& wifi = WiFiManager::getInstance();
         
         if (wifi.isConnected()) {
-            wifi.syncTime();
-            if (wifi.getCurrentTimeEpoch() > 24 * 3600) {
-                response.status = NetworkStatus::TIME_SYNCED;
-                response.value = wifi.getCurrentTimeEpoch();
-                snprintf(response.data, sizeof(response.data), "Time synced");
-                Serial.println("[NetworkTask] Time synced successfully");
-                m_lastTimeSync = millis();
-                m_lastTimeSyncFailed = 0;
-            } else {
-                response.status = NetworkStatus::FAILED;
-                snprintf(response.data, sizeof(response.data), "Time sync failed");
-                Serial.println("[NetworkTask] Time sync failed - will retry");
-                m_lastTimeSyncFailed = millis();
-            }
+            // Non-blocking: just trigger the sync, don't wait
+            wifi.startTimeSync();
+            
+            response.status = NetworkStatus::IN_PROGRESS;
+            snprintf(response.data, sizeof(response.data), "Sync started");
+            Serial.println("[NetworkTask] Time sync started (non-blocking)");
+            m_lastTimeSync = millis();
+            m_lastTimeSyncFailed = 0;
         } else {
             response.status = NetworkStatus::FAILED;
             snprintf(response.data, sizeof(response.data), "WiFi not connected");
@@ -525,7 +519,7 @@ void NetworkTaskManager::handleGetStatus() {
     sendResponse(response);
 }
 
-// Run background tasks (WiFi keepalive, auto-sync)
+// Run background tasks (WiFi keepalive, auto-sync, time sync progress - Phase 5)
 void NetworkTaskManager::runBackgroundTasks() {
     unsigned long now = millis();
 
@@ -544,6 +538,13 @@ void NetworkTaskManager::runBackgroundTasks() {
 
             xSemaphoreGive(m_wifiMutex);
         }
+    }
+
+    // Process time sync progress (non-blocking - Phase 5)
+    if (xSemaphoreTake(m_wifiMutex, pdMS_TO_TICKS(50)) == pdTRUE) {
+        WiFiManager& wifi = WiFiManager::getInstance();
+        wifi.processTimeSync();
+        xSemaphoreGive(m_wifiMutex);
     }
 
     // Auto time sync every hour OR retry every 3 seconds if last attempt failed

@@ -20,8 +20,6 @@ wifi_ssid = require("WIFI_SSID")
 wifi_password = require("WIFI_PASSWORD")
 server_address = require("SERVER_ADDRESS")
 server_port = require("SERVER_PORT")
-server_dns_name = require("SERVER_DNS_NAME")
-server_ip = require("SERVER_IP")
 upload_port = require("UPLOAD_PORT")
 
 env.Append(
@@ -30,8 +28,6 @@ env.Append(
         ("WIFI_PASSWORD", env.StringifyMacro(wifi_password)),
         ("SERVER_ADDRESS", env.StringifyMacro(server_address)),
         ("SERVER_PORT", server_port),
-        ("SERVER_DNS_NAME", env.StringifyMacro(server_dns_name)),
-        ("SERVER_IP", env.StringifyMacro(server_ip)),
         ("UPLOAD_PORT", env.StringifyMacro(upload_port))
     ]
 )
