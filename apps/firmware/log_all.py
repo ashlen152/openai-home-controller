@@ -1,8 +1,16 @@
 import asyncio
 import serial_asyncio
 import logging
+import os
+from dotenv import load_dotenv
 
-PORT = '/dev/cu.usbserial-1130'
+load_dotenv()
+
+PORT = os.getenv('UPLOAD_PORT')
+
+if not PORT:
+    raise ValueError("UPLOAD_PORT not set in environment")
+
 BAUDRATE = 115200
 RECONNECT_DELAY = 2
 
