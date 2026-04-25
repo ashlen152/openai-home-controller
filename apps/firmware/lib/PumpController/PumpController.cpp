@@ -196,7 +196,7 @@ void PumpController::setSpeed(float speed)
   // Keep one source of truth for motion speed:
   // - runPeristaltic() uses currentSpeed
   // - runDosing()/AccelStepper::run() uses stepper maxSpeed
-  currentSpeed = constrain(speed, 0.0f, 50000.0f);
+  currentSpeed = constrain(speed, 0.0f, ::Config::PROFILE_MAX_SPEED);
   stepper.setMaxSpeed(currentSpeed);
 }
 
@@ -253,8 +253,8 @@ void PumpController::setProfileSpeed(uint8_t profile, float speed)
     return;
   }
   
-  // Clamp speed to reasonable range (1000 - 50000 steps/sec)
-  speed = constrain(speed, 1000.0f, 50000.0f);
+  // Clamp speed to configured safe range
+  speed = constrain(speed, ::Config::PROFILE_MIN_SPEED, ::Config::PROFILE_MAX_SPEED);
   speedProfiles[profile] = speed;
   if (profile == activeProfile) {
     setSpeed(speedProfiles[profile]);
@@ -287,7 +287,7 @@ void PumpController::loadSpeedProfiles()
   bool valid = true;
   for (uint8_t i = 0; i < SPEED_PROFILE_COUNT; i++)
   {
-    if (speedProfiles[i] < 1000.0f || speedProfiles[i] > 50000.0f)
+    if (speedProfiles[i] < ::Config::PROFILE_MIN_SPEED || speedProfiles[i] > ::Config::PROFILE_MAX_SPEED)
     {
       valid = false;
       break;

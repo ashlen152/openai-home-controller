@@ -25,6 +25,7 @@
 
 #include "ManualDosingController.h"
 #include <ButtonConfig.h>
+#include <Config.h>
 #include "ButtonController/ButtonController.h"
 #include <DisplayManager.h>
 #include <WiFiManager.h>
@@ -140,11 +141,13 @@ void progressManualDosingController(bool isInManualProgress)
         float stepsPerML = pump.getDosingStepsPerML();
         const long targetSteps = volume * stepsPerML;
         const float targetSeconds = max(duration, 1) * 60.0f;
-        const float targetSpeed = constrain(targetSteps / targetSeconds, 500.0f, 50000.0f);
+        const float targetSpeed = constrain(targetSteps / targetSeconds,
+                                            ::Config::MANUAL_MIN_SPEED,
+                                            ::Config::PROFILE_MAX_SPEED);
 
         // Manual mode now honors selected duration by mapping it to stepper max speed.
         pump.setMaxSpeed(targetSpeed);
-        pump.setAcceleration(targetSpeed * 2.0f);
+        pump.setAcceleration(targetSpeed * ::Config::MANUAL_ACCEL_MULTIPLIER);
 
         pump.moveML(volume);
 

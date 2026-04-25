@@ -33,6 +33,10 @@ namespace Config
 
     constexpr float MAX_SPEED = 100000.0f;  // steps/sec
     constexpr float ACCELERATION = 1000.0f; // steps/sec²
+    constexpr float PROFILE_MIN_SPEED = 1000.0f;      // steps/sec
+    constexpr float PROFILE_MAX_SPEED = 50000.0f;     // steps/sec
+    constexpr float MANUAL_MIN_SPEED = 500.0f;        // steps/sec
+    constexpr float MANUAL_ACCEL_MULTIPLIER = 2.0f;   // accel = speed * multiplier
 
     // ==========================
     // Display & Timing
