@@ -16,7 +16,7 @@
     "server:dev": "npm run docker & npm run server:mdns",
     "install:all": "npm install",
     "docker": "docker compose -f apps/server/docker-compose.yml up -d",
-    "esp32:log": "source ./apps/firmware/venv/bin/activate & python3 ./apps/firmware/log_all.py",
+    "esp32:log": "source ./apps/firmware/venv/bin/activate ; python3 ./apps/firmware/log_all.py",
     "esp32:upload": "cd ./apps/firmware ; pio run --target upload -e esp32dev"
   },
   "engines": {
