@@ -27,6 +27,7 @@ void PumpController::init(Stream *serialPort, uint8_t stepPin, uint8_t dirPin, u
   new (&driver) TMC2209Stepper(serialPort, rSense, addr);
   stepper = AccelStepper(AccelStepper::DRIVER, stepPin, dirPin);
   enPin = enablePin;
+  this->dirPin = dirPin;
 }
 
 PumpController &PumpController::getInstance()
@@ -38,7 +39,9 @@ PumpController &PumpController::getInstance()
 void PumpController::begin()
 {
   pinMode(enPin, OUTPUT);
+  pinMode(dirPin, OUTPUT);
   digitalWrite(enPin, HIGH); // Disabled by default (HIGH = off for TMC2209)
+  digitalWrite(dirPin, LOW); // Keep onboard D2 LED off while pump is idle
 
   driver.begin();
   driver.toff(5);             // Enable driver
@@ -126,6 +129,7 @@ void PumpController::stop()
   mode = PumpMode::HOLDING;
   stepper.stop();
   disablePump();
+  digitalWrite(dirPin, LOW); // Ensure D2 LED turns off after pump stops
 }
 
 void PumpController::moveToPosition(long position)

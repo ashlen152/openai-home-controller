@@ -184,6 +184,7 @@ private:
   TMC2209Stepper driver;   ///< TMC2209 UART driver instance
   AccelStepper stepper;    ///< AccelStepper motion controller
   uint8_t enPin;           ///< Enable pin (LOW = motor on)
+  uint8_t dirPin;          ///< Direction pin (GPIO2 on current board, also onboard LED)
 
   // State
   bool isEnable = false;
