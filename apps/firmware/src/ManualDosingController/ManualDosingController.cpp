@@ -119,8 +119,17 @@ void progressManualDosingController(bool isInManualProgress)
             display.showText("Dosing\nCancelled");
             delay(1000);
             display.setState(DisplayManager::DisplayState::NORMAL);
+            return; // Prevent fallthrough into completion/progress logic after cancel
         }
         float stepsPerML = pump.getDosingStepsPerML();
+        if (stepsPerML <= 0.0f) {
+            pump.stop();
+            restoreActiveProfileSpeed(pump);
+            display.showText("Invalid\nCalibration");
+            delay(1000);
+            display.setState(DisplayManager::DisplayState::NORMAL);
+            return;
+        }
         const long totalSteps = volume * stepsPerML;
         if (pump.getDistanceToGo() <= 0)
         {
@@ -139,6 +148,12 @@ void progressManualDosingController(bool isInManualProgress)
     else
     {
         float stepsPerML = pump.getDosingStepsPerML();
+        if (stepsPerML <= 0.0f) {
+            display.showText("Invalid\nCalibration");
+            delay(1000);
+            display.setState(DisplayManager::DisplayState::NORMAL);
+            return;
+        }
         const long targetSteps = volume * stepsPerML;
         const float targetSeconds = max(duration, 1) * 60.0f;
         const float targetSpeed = constrain(targetSteps / targetSeconds,
