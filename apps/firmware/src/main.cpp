@@ -294,21 +294,39 @@ void loop()
                 }
               }
               
+              // Apply day period atomically so wrap-around updates (e.g., 18->6)
+              // don't get rejected by transient start==end intermediate states.
+              uint8_t mergedDayStart = autoDosing.getDayStartHour();
+              uint8_t mergedDayEnd = autoDosing.getDayEndHour();
+              bool hasDayStartUpdate = false;
+              bool hasDayEndUpdate = false;
+
               if (data["dayStartHour"].is<uint8_t>()) {
                 uint8_t dayStart = data["dayStartHour"].as<uint8_t>();
                 Serial.printf("[Main] Server dayStartHour: %d\n", dayStart);
                 if (dayStart <= 23) {
-                  autoDosing.setDayPeriod(dayStart, autoDosing.getDayEndHour());
-                  Serial.printf("[Main] Applied server dayStartHour: %d\n", dayStart);
+                  mergedDayStart = dayStart;
+                  hasDayStartUpdate = true;
                 }
               }
-              
+
               if (data["dayEndHour"].is<uint8_t>()) {
                 uint8_t dayEnd = data["dayEndHour"].as<uint8_t>();
                 Serial.printf("[Main] Server dayEndHour: %d\n", dayEnd);
                 if (dayEnd <= 23) {
-                  autoDosing.setDayPeriod(autoDosing.getDayStartHour(), dayEnd);
-                  Serial.printf("[Main] Applied server dayEndHour: %d\n", dayEnd);
+                  mergedDayEnd = dayEnd;
+                  hasDayEndUpdate = true;
+                }
+              }
+
+              if (hasDayStartUpdate || hasDayEndUpdate) {
+                if (mergedDayStart != mergedDayEnd) {
+                  autoDosing.setDayPeriod(mergedDayStart, mergedDayEnd);
+                  Serial.printf("[Main] Applied server day period: %02d:00-%02d:00\n",
+                                mergedDayStart, mergedDayEnd);
+                } else {
+                  Serial.printf("[Main] Skipping invalid server day period: %02d:00-%02d:00\n",
+                                mergedDayStart, mergedDayEnd);
                 }
               }
               

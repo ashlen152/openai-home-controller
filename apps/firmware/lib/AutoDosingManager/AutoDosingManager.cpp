@@ -178,6 +178,12 @@ void AutoDosingManager::setDayPeriod(uint8_t newStartHour, uint8_t newEndHour) {
                         newStartHour, newEndHour);
         return;
     }
+
+    if (newStartHour == newEndHour) {
+        AUTO_DOSING_LOG("ERROR: Invalid day period: start (%02d:00) and end (%02d:00) cannot be equal",
+                        newStartHour, newEndHour);
+        return;
+    }
     
     // Allow wrap-around (e.g., 23:00 to 05:00 = 23-5 crosses midnight)
     AUTO_DOSING_LOG("Setting day period: %02d:00 to %02d:00%s", 
