@@ -1,6 +1,17 @@
 import serial
 import time
-ser = serial.Serial('/dev/cu.usbserial-1130', 115200, timeout=1)
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+PORT = os.getenv('UPLOAD_PORT')
+
+if not PORT:
+    raise ValueError("UPLOAD_PORT not set in environment")
+
+
+ser = serial.Serial(PORT, 115200, timeout=1)
 time.sleep(2)
 for i in range(40):
     if ser.in_waiting:

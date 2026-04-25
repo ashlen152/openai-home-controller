@@ -1,0 +1,12 @@
+{
+  "active_plan": "/Users/tpthinh/projects/openai-workflow/.sisyphus/plans/firmware-config-env.md",
+  "started_at": "2026-04-25T09:16:53.415Z",
+  "session_ids": [
+    "ses_23c16e73cffeiBslKIAPqXeKgO"
+  ],
+  "session_origins": {
+    "ses_23c16e73cffeiBslKIAPqXeKgO": "direct"
+  },
+  "plan_name": "firmware-config-env",
+  "agent": "atlas"
+}

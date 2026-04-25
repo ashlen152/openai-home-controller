@@ -46,14 +46,39 @@ The ESP32 firmware communicates with a backend server for settings sync and dose
 
 ### Server Configuration
 
-The server address is configured in `platformio.ini`:
-```ini
-build_flags =
-    -DWIFI_SSID=\"SofaHome\"
-    -DWIFI_PASSWORD=\"Sofa@123\"
-    -DSERVER_ADDRESS=\"192.168.68.109\"
-    -DSERVER_PORT=3000
+The server is configured via `.env` file and `load_env.py` (no need to edit platformio.ini):
+```bash
+# Edit .env file instead of build_flags
+WIFI_SSID=SofaHome
+WIFI_PASSWORD=Sofa@123
+SERVER_ADDRESS=192.168.68.160
+SERVER_PORT=3000
+SERVER_DNS_NAME=openai.local
+SERVER_IP=192.168.68.160
 ```
+
+### Environment Variables
+
+The firmware supports environment variables loaded from `.env` via `load_env.py`:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `WIFI_SSID` | - | WiFi network name |
+| `WIFI_PASSWORD` | - | WiFi password |
+| `SERVER_ADDRESS` | 192.168.68.108 | Primary server address |
+| `SERVER_PORT` | 3000 | Server port |
+| `SERVER_DNS_NAME` | openai.local | DNS hostname for DNS-first resolution |
+| `SERVER_IP` | 192.168.68.160 | Fallback IP when DNS fails |
+| `UPLOAD_PORT` | /dev/cu.usbserial-1130 | USB serial port for upload/monitor |
+
+**DNS-First with IP Fallback:**
+- Firmware attempts to resolve `SERVER_DNS_NAME` first (e.g., openai.local)
+- If DNS fails, falls back to `SERVER_IP` (e.g., 192.168.68.160)
+- Provides resilience when mDNS/DNS is unavailable
+
+**USB Serial Port:**
+- Used by Python scripts (`log_all.py`, `log_40_messages.py`)
+- Override: `export UPLOAD_PORT=/dev/cu.usbserial-XXXX`
 
 ### Request/Response DTOs
 
@@ -215,20 +240,9 @@ deactivate
 
 ## Configuration
 
-### WiFi Credentials
-Edit `platformio.ini`:
-```ini
-build_flags =
-    -DWIFI_SSID=\"YourSSID\"
-    -DWIFI_PASSWORD=\"YourPassword\"
-```
+### Configuration
 
-### Server Address
-```ini
-build_flags =
-    -DSERVER_ADDRESS=\"192.168.1.100\"
-    -DSERVER_PORT=3000
-```
+Edit the `.env` file in the firmware directory (not platformio.ini):
 
 ---
 
