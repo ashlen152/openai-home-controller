@@ -1,12 +1,13 @@
-import React from 'react';
+import React from 'react'
+import MangaCrawlerPage from './pages/manga-crawler/MangaCrawlerPage'
 
 const App: React.FC = () => {
+  
   return (
     <div style={{ padding: 16 }}>
-      <h1>Frontend App</h1>
-      <p>Placeholder App component for the FSD skeleton.</p>
+      <MangaCrawlerPage />
     </div>
-  );
-};
+  )
+}
 
-export default App;
+export default App
