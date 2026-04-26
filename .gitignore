@@ -9,6 +9,7 @@ dist/
 .env
 .env.local
 .env.*.local
+**/.env
 
 # Playwright (auth state - DO NOT COMMIT)
 playwright/.auth/
@@ -65,3 +66,6 @@ data/mongo/
 
 # TikTok downloads
 tiktok_download/
+
+# Sisyphus
+.sisyphus/
