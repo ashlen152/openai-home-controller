@@ -1,0 +1,29 @@
+{
+  "name": "smartpump-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/server",
+    "apps/frontend"
+  ],
+  "scripts": {
+    "server:dev": "npm run docker & npm run start:dev --workspace=apps/server",
+    "server:build": "npm run build --workspace=apps/server",
+    "server:start": "npm run start:prod --workspace=apps/server",
+    "server:test": "npm run test --workspace=apps/server",
+    "server:test:e2e": "npm run test:e2e --workspace=apps/server",
+    "server:lint": "npm run lint --workspace=apps/server",
+    "server:format": "npm run format --workspace=apps/server",
+    "server:mdns": "npm run start:mdns --workspace=apps/server",
+    "frontend:dev": "npm run dev --workspace=apps/frontend",
+    "frontend:build": "npm run build --workspace=apps/frontend",
+    "frontend:start": "npm run preview --workspace=apps/frontend",
+    "install:all": "npm install",
+    "docker": "docker compose -f apps/server/docker-compose.yml up -d",
+    "esp32:log": "source ./apps/firmware/venv/bin/activate ; python3 ./apps/firmware/log_all.py",
+    "esp32:upload": "source ./apps/firmware/venv/bin/activate ; cd ./apps/firmware ; pio run --target upload -e esp32dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

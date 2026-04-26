@@ -1,0 +1,1 @@
+export { MangaList } from './MangaList'

@@ -1,0 +1,531 @@
+{
+  "version": "6.0",
+  "nxVersion": "20.0.0",
+  "pathMappings": {
+    "@smartpump/server": [
+      "apps/server/src"
+    ],
+    "@smartpump/frontend": [
+      "apps/frontend/src"
+    ]
+  },
+  "nxJsonPlugins": [],
+  "fileMap": {
+    "nonProjectFiles": [],
+    "projectFileMap": {
+      "@smartpump/source": [
+        {
+          "file": ".github/workflows/ci.yml",
+          "hash": "518793966647325557"
+        },
+        {
+          "file": ".github/workflows/docker.yml",
+          "hash": "12800479226222379918"
+        },
+        {
+          "file": ".gitignore",
+          "hash": "7342069405601889467"
+        },
+        {
+          "file": ".opencode/CONTEXT.md",
+          "hash": "4653457909000714208"
+        },
+        {
+          "file": ".opencode/commands/quick-ref.md",
+          "hash": "14563547999760427067"
+        },
+        {
+          "file": ".opencode/skills/project-memory/SKILL.md",
+          "hash": "4488722797022439350"
+        },
+        {
+          "file": "AGENTS.md",
+          "hash": "18175195520815369512"
+        },
+        {
+          "file": "apps/firmware/.gitignore",
+          "hash": "12219096912045013731"
+        },
+        {
+          "file": "apps/firmware/AGENTS.md",
+          "hash": "11658265230641025625"
+        },
+        {
+          "file": "apps/firmware/FEATURES.md",
+          "hash": "1189904867846932525"
+        },
+        {
+          "file": "apps/firmware/MEMORY_EXPORT.md",
+          "hash": "433445446816335686"
+        },
+        {
+          "file": "apps/firmware/README.md",
+          "hash": "766250355725303059"
+        },
+        {
+          "file": "apps/firmware/autoschedule.cpp",
+          "hash": "17720225437196183511"
+        },
+        {
+          "file": "apps/firmware/include/ButtonConfig.h",
+          "hash": "536874575752502212"
+        },
+        {
+          "file": "apps/firmware/include/Config.h",
+          "hash": "7339330861227060205"
+        },
+        {
+          "file": "apps/firmware/include/README",
+          "hash": "11673326065756115648"
+        },
+        {
+          "file": "apps/firmware/include/WifiConfig.h",
+          "hash": "2896911962557525812"
+        },
+        {
+          "file": "apps/firmware/lib/ApiClient/ApiClient.cpp",
+          "hash": "16543023883184743725"
+        },
+        {
+          "file": "apps/firmware/lib/ApiClient/ApiClient.h",
+          "hash": "2082057165491062883"
+        },
+        {
+          "file": "apps/firmware/lib/AutoDosingManager/AutoDosingManager.cpp",
+          "hash": "14889284518874931854"
+        },
+        {
+          "file": "apps/firmware/lib/AutoDosingManager/AutoDosingManager.h",
+          "hash": "11229126739508297835"
+        },
+        {
+          "file": "apps/firmware/lib/ConfigManager/ConfigManager.cpp",
+          "hash": "15265763110184113583"
+        },
+        {
+          "file": "apps/firmware/lib/ConfigManager/ConfigManager.h",
+          "hash": "15898381504601511648"
+        },
+        {
+          "file": "apps/firmware/lib/DisplayManager/DisplayManager.cpp",
+          "hash": "8907664189391814209"
+        },
+        {
+          "file": "apps/firmware/lib/DisplayManager/DisplayManager.h",
+          "hash": "5988542950848235986"
+        },
+        {
+          "file": "apps/firmware/lib/EEPROMManager/EEPROMManager.cpp",
+          "hash": "5103309961732729313"
+        },
+        {
+          "file": "apps/firmware/lib/EEPROMManager/EEPROMManager.h",
+          "hash": "16040420013736059543"
+        },
+        {
+          "file": "apps/firmware/lib/NetworkTaskManager/NetworkTaskManager.cpp",
+          "hash": "9438468511805339955"
+        },
+        {
+          "file": "apps/firmware/lib/NetworkTaskManager/NetworkTaskManager.h",
+          "hash": "4943118819827517685"
+        },
+        {
+          "file": "apps/firmware/lib/PumpController/PumpController.cpp",
+          "hash": "9676835968304866477"
+        },
+        {
+          "file": "apps/firmware/lib/PumpController/PumpController.h",
+          "hash": "15513112429122573793"
+        },
+        {
+          "file": "apps/firmware/lib/README",
+          "hash": "3443714795077394295"
+        },
+        {
+          "file": "apps/firmware/lib/RemoteCommandManager/RemoteCommandManager.cpp",
+          "hash": "741389254979458909"
+        },
+        {
+          "file": "apps/firmware/lib/RemoteCommandManager/RemoteCommandManager.h",
+          "hash": "16507434133127446187"
+        },
+        {
+          "file": "apps/firmware/lib/WiFiManager/WiFiManager.cpp",
+          "hash": "15779106096868244186"
+        },
+        {
+          "file": "apps/firmware/lib/WiFiManager/WiFiManager.h",
+          "hash": "16633258105816960202"
+        },
+        {
+          "file": "apps/firmware/load_env.py",
+          "hash": "4576224696631335407"
+        },
+        {
+          "file": "apps/firmware/log_40_messages.py",
+          "hash": "10495140918963049650"
+        },
+        {
+          "file": "apps/firmware/log_all.py",
+          "hash": "14065131355328321890"
+        },
+        {
+          "file": "apps/firmware/platformio.ini",
+          "hash": "4395304194848783296"
+        },
+        {
+          "file": "apps/firmware/requirements.txt",
+          "hash": "6004460715686027701"
+        },
+        {
+          "file": "apps/firmware/src/ButtonController/ButtonController.cpp",
+          "hash": "11893886278175209004"
+        },
+        {
+          "file": "apps/firmware/src/ButtonController/ButtonController.h",
+          "hash": "15145138009871324089"
+        },
+        {
+          "file": "apps/firmware/src/ButtonController/ButtonHandler.cpp",
+          "hash": "5359138266300000279"
+        },
+        {
+          "file": "apps/firmware/src/ButtonController/ButtonHandler.h",
+          "hash": "12161526022991647330"
+        },
+        {
+          "file": "apps/firmware/src/CalibrateDosingController/CalibrateDosingController.cpp",
+          "hash": "9701562570470391053"
+        },
+        {
+          "file": "apps/firmware/src/CalibrateDosingController/CalibrateDosingController.h",
+          "hash": "9160046594385812349"
+        },
+        {
+          "file": "apps/firmware/src/DisplayController/DisplayUpdater.cpp",
+          "hash": "3012211886085301236"
+        },
+        {
+          "file": "apps/firmware/src/DisplayController/DisplayUpdater.h",
+          "hash": "1433920678051751250"
+        },
+        {
+          "file": "apps/firmware/src/LoopController/LoopController.cpp",
+          "hash": "7081391472475497012"
+        },
+        {
+          "file": "apps/firmware/src/LoopController/LoopController.h",
+          "hash": "2029233193981541710"
+        },
+        {
+          "file": "apps/firmware/src/ManualDosingController/ManualDosingController.cpp",
+          "hash": "17541778459116306377"
+        },
+        {
+          "file": "apps/firmware/src/ManualDosingController/ManualDosingController.h",
+          "hash": "16943441598265324660"
+        },
+        {
+          "file": "apps/firmware/src/TestDosingController/TestDosingController.cpp",
+          "hash": "12811405144684380099"
+        },
+        {
+          "file": "apps/firmware/src/TestDosingController/TestDosingController.h",
+          "hash": "11999743078139947204"
+        },
+        {
+          "file": "apps/firmware/src/ViewController/Home/HomeHandler.cpp",
+          "hash": "4507301934361779656"
+        },
+        {
+          "file": "apps/firmware/src/ViewController/Home/HomeHandler.h",
+          "hash": "5608629489060905903"
+        },
+        {
+          "file": "apps/firmware/src/ViewController/Manual/ManualHandler.cpp",
+          "hash": "5940159178560085944"
+        },
+        {
+          "file": "apps/firmware/src/ViewController/Manual/ManualHandler.h",
+          "hash": "10798543438450980649"
+        },
+        {
+          "file": "apps/firmware/src/ViewController/Menu/MenuHandler.cpp",
+          "hash": "2872937791062703461"
+        },
+        {
+          "file": "apps/firmware/src/ViewController/Menu/MenuHandler.h",
+          "hash": "4727924126490216138"
+        },
+        {
+          "file": "apps/firmware/src/WifiController/WiFiSync.cpp",
+          "hash": "11828001725051118556"
+        },
+        {
+          "file": "apps/firmware/src/WifiController/WiFiSync.h",
+          "hash": "16029753621179442665"
+        },
+        {
+          "file": "apps/firmware/src/main.cpp",
+          "hash": "329883560554044720"
+        },
+        {
+          "file": "apps/firmware/test/README",
+          "hash": "12812498642907865273"
+        },
+        {
+          "file": "apps/firmware/test/test_config/test_config_manager.cpp",
+          "hash": "4711571428510298881"
+        },
+        {
+          "file": "apps/firmware/test/test_eeprom/test_eeprom_manager.cpp",
+          "hash": "10717138564796845830"
+        },
+        {
+          "file": "apps/firmware/test/test_schedule_generation/test_schedule.cpp",
+          "hash": "7958595305754875127"
+        },
+        {
+          "file": "apps/firmware/test/test_time/test_auto_dosing_time.cpp",
+          "hash": "14063808187588046438"
+        },
+        {
+          "file": "nx.json",
+          "hash": "17659029468631214501"
+        },
+        {
+          "file": "package-lock.json",
+          "hash": "13942728355243382214"
+        },
+        {
+          "file": "package.json",
+          "hash": "8135149476398294854"
+        },
+        {
+          "file": "tsconfig.json",
+          "hash": "13381974102820176605"
+        }
+      ],
+      "frontend": [
+        {
+          "file": "apps/frontend/.gitignore",
+          "hash": "13046175384202504187"
+        },
+        {
+          "file": "apps/frontend/README.md",
+          "hash": "221464161276330829"
+        },
+        {
+          "file": "apps/frontend/index.html",
+          "hash": "14340966651696912133"
+        },
+        {
+          "file": "apps/frontend/project.json",
+          "hash": "9865025405856743903"
+        },
+        {
+          "file": "apps/frontend/public/favicon.svg",
+          "hash": "9681363740239943431"
+        },
+        {
+          "file": "apps/frontend/public/icons.svg",
+          "hash": "12690649164411559435"
+        },
+        {
+          "file": "apps/frontend/src/App.tsx",
+          "hash": "16669582602917429446",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/features/manga-list/MangaList.tsx",
+          "hash": "9196351596073652877",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/features/pump-form/PumpForm.tsx",
+          "hash": "8541124128633674645",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/index.css",
+          "hash": "12285939503904912914"
+        },
+        {
+          "file": "apps/frontend/src/main.tsx",
+          "hash": "11038211546439381838",
+          "deps": [
+            "npm:react",
+            "npm:react-dom"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/pages/manga-crawler/MangaCrawlerPage.tsx",
+          "hash": "16069810919145246298",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/pages/manga-crawler/index.tsx",
+          "hash": "3302321687292959750"
+        },
+        {
+          "file": "apps/frontend/src/pages/pump-controller/index.tsx",
+          "hash": "9521974261227074433",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/manga-library/MangaCard.tsx",
+          "hash": "8776933972724183089",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/manga-library/MangaDetailModal.tsx",
+          "hash": "14677126045987859544",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/manga-library/MangaLibrary.tsx",
+          "hash": "16307549753558811277",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/CalibrationModal.tsx",
+          "hash": "14428367734492553241",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/CommandsGrid.tsx",
+          "hash": "9634909976697600745",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/DoseHistory.tsx",
+          "hash": "16592098709881043241",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/PumpCard.tsx",
+          "hash": "4544550545203497613",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/PumpDashboard.tsx",
+          "hash": "2267844382364015060",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/PumpList.tsx",
+          "hash": "11650610310512642064",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/SerialLogsViewer.tsx",
+          "hash": "13818725034139297880",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/SettingsCompareModal.tsx",
+          "hash": "3603825707747294417",
+          "deps": [
+            "npm:react"
+          ]
+        },
+        {
+          "file": "apps/frontend/src/widgets/pump-dashboard/TodayDoses.tsx",
+          "hash": "13596665273997482713",
+          "deps": [
+            "npm:react"
+          ]
+        }
+      ],
+      "server": [
+        {
+          "file": "apps/server/.env.example",
+          "hash": "819264832105049950"
+        },
+        {
+          "file": "apps/server/.gitignore",
+          "hash": "15267357676969259020"
+        },
+        {
+          "file": "apps/server/.prettierrc",
+          "hash": "5265871919894009"
+        },
+        {
+          "file": "apps/server/AGENTS.md",
+          "hash": "2757763818544886413"
+        },
+        {
+          "file": "apps/server/Dockerfile",
+          "hash": "6674541110486552250"
+        },
+        {
+          "file": "apps/server/Dockerfile.dev",
+          "hash": "14664107933414898546"
+        },
+        {
+          "file": "apps/server/README.md",
+          "hash": "6867001807977315480"
+        },
+        {
+          "file": "apps/server/docker-compose.yml",
+          "hash": "8773101984171625610"
+        },
+        {
+          "file": "apps/server/pnpm-lock.yaml",
+          "hash": "8199599521361724070"
+        },
+        {
+          "file": "apps/server/project.json",
+          "hash": "7469992979307991089"
+        },
+        {
+          "file": "apps/server/public/index.html",
+          "hash": "10307616593653489091"
+        },
+        {
+          "file": "apps/server/public/manga-reader-full.html",
+          "hash": "9412069763774722133"
+        },
+        {
+          "file": "apps/server/public/manga-reader.html",
+          "hash": "4551238893915906073"
+        },
+        {
+          "file": "apps/server/public/styles.css",
+          "hash": "13169011994121934439"
+        }
+      ]
+    }
+  }
+}
