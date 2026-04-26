@@ -62,6 +62,9 @@ apps/firmware/
 │       └── AutoDosingManager.cpp
 ├── src/
 │   ├── main.cpp                    # Entry point: setup() and loop()
+│   ├── LoopController/             # Loop iteration handlers
+│   │   ├── LoopController.h
+│   │   └── LoopController.cpp
 │   ├── ButtonController/           # Button press/hold abstraction layer
 │   │   ├── ButtonController.h      # High-level: pressButtonUp(), holdButtonDown(), etc.
 │   │   ├── ButtonController.cpp

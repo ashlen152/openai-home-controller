@@ -397,26 +397,18 @@ void DisplayManager::showDoseHistory()
 void DisplayManager::displaySignalStrength()
 {
   m_display.setCursor(0, SCREEN_HEIGHT - 8);
-  if (rssi < -50)
-  {
-    drawWiFiSignal(4);
-  }
-  else if (rssi < -60)
-  {
-    drawWiFiSignal(3);
-  }
-  else if (rssi < -70)
-  {
-    drawWiFiSignal(2);
-  }
-  else if (rssi < -80)
-  {
-    drawWiFiSignal(1);
-  }
+  int strength;
+  if (rssi >= -50)
+    strength = 4;
+  else if (rssi >= -60)
+    strength = 3;
+  else if (rssi >= -70)
+    strength = 2;
+  else if (rssi >= -80)
+    strength = 1;
   else
-  {
-    drawWiFiSignal(0);
-  }
+    strength = 0;
+  drawWiFiSignal(strength);
 }
 
 void DisplayManager::drawWiFiSignal(int strength)
