@@ -1,0 +1,2 @@
+- Blocker: Environment-specific preprocessor macro alias approach introduced to bridge renamed private members. If future refactor occurs, ensure no macro shadowing or name collisions.
+- Risk: If any external module directly relies on old member names via reflection or binary interfaces, a macro alias might mask it. Plan to remove macros after full refactor.

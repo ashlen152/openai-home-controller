@@ -2,7 +2,7 @@
 #include <time.h>
 
 DisplayManager::DisplayManager()
-    : display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET) {}
+    : m_display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET) {}
 
 DisplayManager &DisplayManager::getInstance()
 {
@@ -14,34 +14,34 @@ DisplayManager &DisplayManager::getInstance()
 void DisplayManager::updateDisplayState()
 {
   unsigned long now = millis();
-  if (now - lastUpdate < 200)
+  if (now - m_lastUpdate < 200)
     return;
-  lastUpdate = now;
+  m_lastUpdate = now;
 
-  if (!dirty && memcmp(&m_ctx, &m_prevCtx, sizeof(DisplayContext)) == 0 && 
-      currentState != DisplayState::NORMAL)
+  if (!m_dirty && memcmp(&m_ctx, &m_prevCtx, sizeof(DisplayContext)) == 0 && 
+      m_currentState != DisplayState::NORMAL)
     return;
   
-  dirty = false;
+  m_dirty = false;
   memcpy(&m_prevCtx, &m_ctx, sizeof(DisplayContext));
 
-  display.clearDisplay();
+  m_display.clearDisplay();
 
   // States that are handled manually and should not auto-revert
-  bool isManualState = (currentState == DisplayState::CALIBRATE_BEGIN ||
-                        currentState == DisplayState::CALIBRATE_PROGRESS ||
-                        currentState == DisplayState::CALIBRATE_COMPLETE ||
-                        currentState == DisplayState::DOSING_SETUP ||
-                        currentState == DisplayState::DOSING_PROGRESS ||
-                        currentState == DisplayState::DOSING_COMPLETE);
+  bool isManualState = (m_currentState == DisplayState::CALIBRATE_BEGIN ||
+                        m_currentState == DisplayState::CALIBRATE_PROGRESS ||
+                        m_currentState == DisplayState::CALIBRATE_COMPLETE ||
+                        m_currentState == DisplayState::DOSING_SETUP ||
+                        m_currentState == DisplayState::DOSING_PROGRESS ||
+                        m_currentState == DisplayState::DOSING_COMPLETE);
 
   // Timing logic for STATUS state
-  if ((currentState != DisplayState::NORMAL || currentState != DisplayState::MENU) && now - stateChangeTime > 3000)
+  if ((m_currentState != DisplayState::NORMAL || m_currentState != DisplayState::MENU) && now - stateChangeTime > 3000)
   {
-    currentState = DisplayState::NORMAL;
+    m_currentState = DisplayState::NORMAL;
   }
   // Single switch-case for all states
-  switch (currentState)
+  switch (m_currentState)
   {
   case DisplayState::NORMAL:
     updateStatus(m_ctx.pumpEnabled, m_ctx.value, m_ctx.currentTime, m_ctx.autodosingEnabled, m_ctx.nextSchedule, m_ctx.totalVolume, m_ctx.stepsPerML, m_ctx.activeProfile);
@@ -49,7 +49,7 @@ void DisplayManager::updateDisplayState()
     break;
   case DisplayState::MENU:
     stateChangeTime = now;
-    showMenu(m_ctx.menuIndex, m_ctx.menuItems, m_ctx.itemCount);
+    showMenu(m_ctx.menuIndex, m_ctx.m_menuItems, m_ctx.m_menuItemCount);
     break;
   case DisplayState::SETTINGS:
     showSettingsInfo(m_ctx.currentSpeed, m_ctx.stepsPerML, m_ctx.speedStep);
@@ -85,20 +85,20 @@ void DisplayManager::updateDisplayState()
     updateStatus(m_ctx.pumpEnabled, m_ctx.value, m_ctx.currentTime, m_ctx.autodosingEnabled, m_ctx.nextSchedule);
     break;
   }
-  lastState = currentState;
-  display.display();
+  lastState = m_currentState;
+  m_display.display();
 }
 
 void DisplayManager::begin()
 {
-  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0);
-  display.println(F("Hello OLED!"));
+  m_display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  m_display.clearDisplay();
+  m_display.setTextSize(1);
+  m_display.setTextColor(SSD1306_WHITE);
+  m_display.setCursor(0, 0);
+  m_display.println(F("Hello OLED!"));
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::setSignalStrength(int strength)
@@ -110,40 +110,40 @@ void DisplayManager::updateStatus(bool pumpEnabled, float value, const char *cur
 {
   if (isDisplayInUse(DisplayManager::DisplayState::NORMAL))
     return;
-  display.clearDisplay();
-  display.setCursor(0, 0);
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
 
   const char* profileName = "???";
   if (activeProfile == 0) profileName = "Slow";
   else if (activeProfile == 1) profileName = "Med";
   else if (activeProfile == 2) profileName = "Fast";
 
-  display.print("Steps:");
-  display.print(stepsPerML, 0);
+  m_display.print("Steps:");
+  m_display.print(stepsPerML, 0);
   display.println("/ml");
 
-  display.print("Profile:");
-  display.println(profileName);
+  m_display.print("Profile:");
+  m_display.println(profileName);
 
-  display.print("Auto:");
-  display.print(autodosingEnabled ? "ON" : "OFF");
-  display.print(" Vol:");
-  display.print(totalVolume, 1);
-  display.println("ml");
+  m_display.print("Auto:");
+  m_display.print(autodosingEnabled ? "ON" : "OFF");
+  m_display.print(" Vol:");
+  m_display.print(totalVolume, 1);
+  m_display.println("ml");
 
   if (autodosingEnabled && nextSchedule) {
-    display.print("Next:");
-    display.println(nextSchedule);
+    m_display.print("Next:");
+    m_display.println(nextSchedule);
   }
   
   display.print("Time:");
   if (currentTime)
-    display.println(currentTime);
+    m_display.println(currentTime);
   else
-    display.println("--:--:--");
+    m_display.println("--:--:--");
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showHomeStatus(float stepsPerML, int activeProfile)

@@ -40,8 +40,8 @@ struct DisplayContext
     bool autodosingEnabled = false;
     const char *nextSchedule = nullptr;
     int menuIndex = 0;
-    const char **menuItems = nullptr;
-    int itemCount = 0;
+    const char **m_menuItems = nullptr;
+    int m_menuItemCount = 0;
     int currentSpeed = 0;
     float stepsPerML = 0.0f;
     int speedStep = 0;
@@ -106,9 +106,9 @@ public:
     void begin();
 
     // State management
-    void setState(DisplayManager::DisplayState state) { currentState = state; dirty = true; }
-    DisplayState getCurrentState() const { return currentState; }
-    bool isSleeping() const { return displaySleeping; }
+    void setState(DisplayManager::DisplayState state) { m_currentState = state; m_dirty = true; }
+    DisplayState getCurrentState() const { return m_currentState; }
+    bool isSleeping() const { return m_displaySleeping; }
 
     // Status & Info
     void updateStatus(bool pumpEnabled, float value, const char *currentTime = nullptr, bool autodosingEnabled = false, const char *nextSchedule = nullptr, float totalVolume = 0.0f, float stepsPerML = 0.0f, int activeProfile = 1);
@@ -167,8 +167,8 @@ public:
     void setContextMenu(int menuIndex, const char **menuItems, int itemCount)
     {
         m_ctx.menuIndex = menuIndex;
-        m_ctx.menuItems = menuItems;
-        m_ctx.itemCount = itemCount;
+        m_ctx.m_menuItems = menuItems;
+        m_ctx.m_menuItemCount = itemCount;
     }
     void setContextSettings(int currentSpeed, float stepsPerML, int speedStep)
     {
@@ -219,11 +219,11 @@ private:
     void displaySignalStrength();
     void drawWiFiSignal(int strength);
 
-    Adafruit_SSD1306 display;
-    bool displaySleeping = false;
-    unsigned long lastUpdate = 0;
-    bool dirty = true;
-    DisplayState currentState = DisplayState::NORMAL;
+    Adafruit_SSD1306 m_display;
+    bool m_displaySleeping = false;
+    unsigned long m_lastUpdate = 0;
+    bool m_dirty = true;
+    DisplayState m_currentState = DisplayState::NORMAL;
     DisplayState lastState = DisplayState::NORMAL;
     unsigned long stateChangeTime = 0;
     int rssi = 0;

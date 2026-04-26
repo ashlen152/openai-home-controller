@@ -1,0 +1,3 @@
+- Decision: Use m_ prefix for private members to align with existing convention in other components.
+- Decision: Introduce macro aliases in PumpController.h to bridge old private member names to new m_ prefixed names, to minimize churn in PumpController.cpp and other files.
+- Decision: Run PlatformIO build to verify integration; accept macro-bridge approach to reach a valid build quickly.

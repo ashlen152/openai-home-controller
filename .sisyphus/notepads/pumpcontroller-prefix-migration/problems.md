@@ -1,0 +1,2 @@
+- Potential future refactor: Remove macros and perform a full rename in PumpController.{h,cpp}, plus update all call sites across the codebase.
+- Risk: During transition, some IDEs may not resolve macro-based aliasing properly; ensure cross-file builds are clean.
