@@ -10,7 +10,7 @@ DisplayManager &DisplayManager::getInstance()
   return instance;
 }
 
-// Call this in your main loop to update display every second
+// Call this in your main loop to update m_display every second
 void DisplayManager::updateDisplayState()
 {
   unsigned long now = millis();
@@ -120,7 +120,7 @@ void DisplayManager::updateStatus(bool pumpEnabled, float value, const char *cur
 
   m_display.print("Steps:");
   m_display.print(stepsPerML, 0);
-  display.println("/ml");
+  m_display.println("/ml");
 
   m_display.print("Profile:");
   m_display.println(profileName);
@@ -136,7 +136,7 @@ void DisplayManager::updateStatus(bool pumpEnabled, float value, const char *cur
     m_display.println(nextSchedule);
   }
   
-  display.print("Time:");
+  m_display.print("Time:");
   if (currentTime)
     m_display.println(currentTime);
   else
@@ -150,26 +150,26 @@ void DisplayManager::showHomeStatus(float stepsPerML, int activeProfile)
 {
   if (isDisplayInUse(DisplayManager::DisplayState::NORMAL))
     return;
-  display.clearDisplay();
-  display.setCursor(0, 0);
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
 
   const char* profileName = "Unknown";
   if (activeProfile == 0) profileName = "Slow";
   else if (activeProfile == 1) profileName = "Medium";
   else if (activeProfile == 2) profileName = "Fast";
 
-  display.print("Steps/mL:");
-  display.println(stepsPerML, 0);
-  display.print("Profile:");
-  display.println(profileName);
+  m_display.print("Steps/mL:");
+  m_display.println(stepsPerML, 0);
+  m_display.print("Profile:");
+  m_display.println(profileName);
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 bool DisplayManager::isDisplayInUse(DisplayManager::DisplayState state)
 {
-  if (currentState == state && !displaySleeping)
+  if (m_currentState == state && !m_displaySleeping)
     return false;
   return true;
 }
@@ -179,16 +179,16 @@ void DisplayManager::showMenu(int menuIndex, const char *menuItems[], int itemCo
   if (isDisplayInUse(DisplayManager::DisplayState::MENU))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Menu:");
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Menu:");
   for (int i = 0; i < itemCount; i++)
   {
-    display.print(menuIndex == i ? "> " : "  ");
-    display.println(menuItems[i]);
+    m_display.print(menuIndex == i ? "> " : "  ");
+    m_display.println(menuItems[i]);
   }
   displaySignalStrength(); // Will be updated by caller if needed
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showSettingsInfo(int currentSpeed, float stepsPerML, int speedStep)
@@ -196,17 +196,17 @@ void DisplayManager::showSettingsInfo(int currentSpeed, float stepsPerML, int sp
   if (isDisplayInUse(DisplayManager::DisplayState::SETTINGS))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Settings Info:");
-  display.print("Speed: ");
-  display.println(currentSpeed);
-  display.print("Steps/mL: ");
-  display.println(stepsPerML, 2);
-  display.print("Step Adj: ");
-  display.println(speedStep);
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Settings Info:");
+  m_display.print("Speed: ");
+  m_display.println(currentSpeed);
+  m_display.print("Steps/mL: ");
+  m_display.println(stepsPerML, 2);
+  m_display.print("Step Adj: ");
+  m_display.println(speedStep);
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showCalibrationStart(int timeLeft)
@@ -214,78 +214,78 @@ void DisplayManager::showCalibrationStart(int timeLeft)
   if (isDisplayInUse(DisplayManager::DisplayState::CALIBRATE_BEGIN))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Calibrating...");
-  display.print("Time left: ");
-  display.print(timeLeft);
-  display.println("s");
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Calibrating...");
+  m_display.print("Time left: ");
+  m_display.print(timeLeft);
+  m_display.println("s");
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showCalibrationInput(float ml)
 {
   if (isDisplayInUse(DisplayManager::DisplayState::CALIBRATE_PROGRESS))
     return;
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Enter mL result:");
-  display.setCursor(0, 20);
-  display.print("mL: ");
-  display.print(ml);
-  display.print("   ");
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Enter mL result:");
+  m_display.setCursor(0, 20);
+  m_display.print("mL: ");
+  m_display.print(ml);
+  m_display.print("   ");
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showCalibrationResult(float stepsPerML, int speedStep)
 {
   if (isDisplayInUse(DisplayManager::DisplayState::CALIBRATE_COMPLETE))
     return;
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Calibration Done");
-  display.print("Steps/mL: ");
-  display.println(stepsPerML, 2);
-  display.print("Step Adj: ");
-  display.println(speedStep);
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Calibration Done");
+  m_display.print("Steps/mL: ");
+  m_display.println(stepsPerML, 2);
+  m_display.print("Step Adj: ");
+  m_display.println(speedStep);
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showText(const char *text)
 {
-  dirty = true;
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println(text);
+  m_dirty = true;
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println(text);
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showText(const std::vector<String> &textArray)
 {
-  display.clearDisplay();
-  display.setCursor(0, 0);
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
   for (size_t i = 0; i < textArray.size(); i++)
   {
-    display.println(textArray[i]);
+    m_display.println(textArray[i]);
   }
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::sleepDisplay()
 {
-  display.ssd1306_command(SSD1306_DISPLAYOFF);
-  displaySleeping = true;
+  m_display.ssd1306_command(SSD1306_DISPLAYOFF);
+  m_displaySleeping = true;
 }
 
 void DisplayManager::wakeDisplay()
 {
-  display.ssd1306_command(SSD1306_DISPLAYON);
-  displaySleeping = false;
+  m_display.ssd1306_command(SSD1306_DISPLAYON);
+  m_displaySleeping = false;
 }
 
 void DisplayManager::showDosingManualSetup(float volume)
@@ -293,21 +293,21 @@ void DisplayManager::showDosingManualSetup(float volume)
   if (isDisplayInUse(DisplayManager::DisplayState::DOSING_SETUP))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Manual Dosing Setup");
-  display.println();
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Manual Dosing Setup");
+  m_display.println();
 
-  display.println("Set Target Volume:");
-  display.print(volume, 2);
-  display.println(" mL");
-  display.println();
-  display.println("UP/DOWN to adjust");
-  display.println("ENABLE to confirm");
-  display.println("MENU to cancel");
+  m_display.println("Set Target Volume:");
+  m_display.print(volume, 2);
+  m_display.println(" mL");
+  m_display.println();
+  m_display.println("UP/DOWN to adjust");
+  m_display.println("ENABLE to confirm");
+  m_display.println("MENU to cancel");
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showDosingManualBegin(int duration)
@@ -315,21 +315,21 @@ void DisplayManager::showDosingManualBegin(int duration)
   if (isDisplayInUse(DisplayManager::DisplayState::DOSING_MANUAL_BEGIN))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Manual Dosing Setup");
-  display.println();
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Manual Dosing Setup");
+  m_display.println();
 
-  display.println("Set Time Duration:");
-  display.print(duration);
-  display.println(" min");
-  display.println();
-  display.println("UP/DOWN to adjust");
-  display.println("ENABLE to start");
-  display.println("MENU to cancel");
+  m_display.println("Set Time Duration:");
+  m_display.print(duration);
+  m_display.println(" min");
+  m_display.println();
+  m_display.println("UP/DOWN to adjust");
+  m_display.println("ENABLE to start");
+  m_display.println("MENU to cancel");
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showDosingManualProgress(float volume, float remainingVolume, const char *remainingTime)
@@ -337,25 +337,25 @@ void DisplayManager::showDosingManualProgress(float volume, float remainingVolum
   if (isDisplayInUse(DisplayManager::DisplayState::DOSING_MANUAL_PROGRESS))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Dosing in Progress");
-  display.println();
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Dosing in Progress");
+  m_display.println();
 
-  display.print("Total: ");
-  display.print(volume, 2);
-  display.println(" mL");
+  m_display.print("Total: ");
+  m_display.print(volume, 2);
+  m_display.println(" mL");
 
-  display.print("Remain: ");
-  display.print(remainingVolume, 2);
-  display.println(" mL");
+  m_display.print("Remain: ");
+  m_display.print(remainingVolume, 2);
+  m_display.println(" mL");
 
-  display.println();
-  display.print("Time Left: ");
-  display.println(remainingTime);
+  m_display.println();
+  m_display.print("Time Left: ");
+  m_display.println(remainingTime);
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::showDosingManualComplete(float totalVolume)
@@ -363,17 +363,17 @@ void DisplayManager::showDosingManualComplete(float totalVolume)
   if (isDisplayInUse(DisplayManager::DisplayState::DOSING_MANUAL_COMPLETE))
     return;
 
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.println("Dosing Complete!");
-  display.println();
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.println("Dosing Complete!");
+  m_display.println();
 
-  display.print("Total Dosed: ");
-  display.print(totalVolume, 2);
-  display.println(" mL");
+  m_display.print("Total Dosed: ");
+  m_display.print(totalVolume, 2);
+  m_display.println(" mL");
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
 
 // Phase 3 Sprint 6: Show dose history
@@ -381,22 +381,22 @@ void DisplayManager::showDosingManualComplete(float totalVolume)
 // The history data should be fetched in the menu handler before setting the state
 void DisplayManager::showDoseHistory()
 {
-  display.clearDisplay();
-  display.setCursor(0, 0);
-  display.setTextSize(1);
+  m_display.clearDisplay();
+  m_display.setCursor(0, 0);
+  m_display.setTextSize(1);
   
-  display.println("=== Dose History ===");
-  display.println();
-  display.println("View from menu");
-  display.println("Press any button");
-  display.println("to exit");
+  m_display.println("=== Dose History ===");
+  m_display.println();
+  m_display.println("View from menu");
+  m_display.println("Press any button");
+  m_display.println("to exit");
   
-  display.display();
+  m_display.display();
 }
 
 void DisplayManager::displaySignalStrength()
 {
-  display.setCursor(0, SCREEN_HEIGHT - 8);
+  m_display.setCursor(0, SCREEN_HEIGHT - 8);
   if (rssi < -50)
   {
     drawWiFiSignal(4);
@@ -427,11 +427,11 @@ void DisplayManager::drawWiFiSignal(int strength)
     int barHeight = 2;
     if (i < strength)
     {
-      display.fillRect(0 + i * 4, SCREEN_HEIGHT - barHeight, 3, barHeight, WHITE);
+      m_display.fillRect(0 + i * 4, SCREEN_HEIGHT - barHeight, 3, barHeight, WHITE);
     }
     else
     {
-      display.drawRect(0 + i * 4, SCREEN_HEIGHT - barHeight, 3, barHeight, WHITE);
+      m_display.drawRect(0 + i * 4, SCREEN_HEIGHT - barHeight, 3, barHeight, WHITE);
     }
   }
 }
@@ -441,19 +441,19 @@ void DisplayManager::showValue(const char *label, float value)
   if (isDisplayInUse(DisplayManager::DisplayState::NORMAL))
     return;
 
-  display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
+  m_display.clearDisplay();
+  m_display.setTextSize(1);
+  m_display.setTextColor(SSD1306_WHITE);
 
   // Show label
-  display.setCursor(0, 0);
-  display.println(label);
+  m_display.setCursor(0, 0);
+  m_display.println(label);
 
   // Show value in larger text
-  display.setTextSize(1);
-  display.setCursor(0, 16);
-  display.print(value, 1);
+  m_display.setTextSize(1);
+  m_display.setCursor(0, 16);
+  m_display.print(value, 1);
 
   displaySignalStrength();
-  display.display();
+  m_display.display();
 }
