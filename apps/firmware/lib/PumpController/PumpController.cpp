@@ -15,8 +15,8 @@
 
 // Private constructor for Singleton pattern
 PumpController::PumpController()
-  : driver(&Serial, 0.11f, 0x00)  // Temporary init, re-initialized in init()
-  , stepper(AccelStepper::DRIVER, 0, 0)  // Temporary init, re-initialized in init()
+  : m_driver(&Serial, 0.11f, 0x00)  // Temporary init, re-initialized in init()
+  , m_stepper(AccelStepper::DRIVER, 0, 0)  // Temporary init, re-initialized in init()
 {
   // Real initialization happens in init() method
 }
@@ -24,9 +24,9 @@ PumpController::PumpController()
 void PumpController::init(Stream *serialPort, uint8_t stepPin, uint8_t dirPin, uint8_t enablePin, float rSense, uint8_t addr)
 {
   // Reinitialize driver using placement new to avoid copy-assignment (TMC2209Stepper has no operator=)
-  new (&driver) TMC2209Stepper(serialPort, rSense, addr);
-  stepper = AccelStepper(AccelStepper::DRIVER, stepPin, dirPin);
-  enPin = enablePin;
+  new (&m_driver) TMC2209Stepper(serialPort, rSense, addr);
+  m_stepper = AccelStepper(AccelStepper::DRIVER, stepPin, dirPin);
+  m_enPin = enablePin;
 }
 
 PumpController &PumpController::getInstance()
@@ -37,19 +37,19 @@ PumpController &PumpController::getInstance()
 
 void PumpController::begin()
 {
-  pinMode(enPin, OUTPUT);
-  digitalWrite(enPin, HIGH); // Disabled by default (HIGH = off for TMC2209)
+  pinMode(m_enPin, OUTPUT);
+  digitalWrite(m_enPin, HIGH); // Disabled by default (HIGH = off for TMC2209)
 
-  driver.begin();
-  driver.toff(5);             // Enable driver
-  driver.rms_current(500);    // Increase motor current (mA)
-  driver.pwm_autoscale(false); // Disable stealthChop, use spreadCycle
-  driver.microsteps(16);      // Set to 16 microsteps (matches calibration)
+  m_driver.begin();
+  m_driver.toff(5);             // Enable driver
+  m_driver.rms_current(500);    // Increase motor current (mA)
+  m_driver.pwm_autoscale(false); // Disable stealthChop, use spreadCycle
+  m_driver.microsteps(16);      // Set to 16 microsteps (matches calibration)
 
-  stepper.setMaxSpeed(4000);
-  stepper.setAcceleration(2000);
-  speedStep = 2000;
-  currentSpeed = 0;
+  m_stepper.setMaxSpeed(4000);
+  m_stepper.setAcceleration(2000);
+  m_speedStep = 2000;
+  m_currentSpeed = 0;
   
   // Load speed profiles from EEPROM (Phase 3 Sprint 7)
   loadSpeedProfiles();
@@ -86,10 +86,10 @@ void PumpController::begin()
 
 void PumpController::runPeristaltic()
 {
-  if (isEnable && currentSpeed > 0)
+  if (m_isEnable && m_currentSpeed > 0)
   {
-    stepper.setSpeed(currentSpeed);
-    stepper.runSpeed();
+    m_stepper.setSpeed(m_currentSpeed);
+    m_stepper.runSpeed();
   }
 }
 
@@ -104,7 +104,7 @@ long PumpController::getDistanceToGo()
  */
 void PumpController::runDosing()
 {
-  if (mode != PumpMode::DOSING || !isEnable)
+  if (m_mode != PumpMode::DOSING || !m_isEnable)
     return;
 
   long remaining = abs(getDistanceToGo());
@@ -122,20 +122,20 @@ void PumpController::runDosing()
 
 void PumpController::stop()
 {
-  currentSpeed = 0;
-  mode = PumpMode::HOLDING;
-  stepper.stop();
+  m_currentSpeed = 0;
+  m_mode = PumpMode::HOLDING;
+  m_stepper.stop();
   disablePump();
 }
 
 void PumpController::moveToPosition(long position)
 {
-  stepper.moveTo(position);
+  m_stepper.moveTo(position);
 }
 
 void PumpController::moveRelative(long steps)
 {
-  stepper.move(steps);
+  m_stepper.move(steps);
 }
 
 void PumpController::updateCurrentPosition()
@@ -151,22 +151,22 @@ void PumpController::updateCurrentPosition()
 
 void PumpController::enablePump()
 {
-  digitalWrite(enPin, LOW);
-  isEnable = true;
+  digitalWrite(m_enPin, LOW);
+  m_isEnable = true;
 }
 
 void PumpController::disablePump()
 {
-  digitalWrite(enPin, HIGH);
-  isEnable = false;
+  digitalWrite(m_enPin, HIGH);
+  m_isEnable = false;
 }
 
 void PumpController::moveML(float ml)
 {
-  mode = PumpMode::DOSING;
+  m_mode = PumpMode::DOSING;
   // Reset position to 0 before starting new movement
-  long currentPos = stepper.currentPosition();
-  stepper.setCurrentPosition(0);
+  long currentPos = m_stepper.currentPosition();
+  m_stepper.setCurrentPosition(0);
 
   // Calculate required steps using calibrated value
   long steps = lroundf(ml * getStepsPerML());
@@ -182,7 +182,7 @@ void PumpController::moveML(float ml)
 
 long PumpController::getCurrentPosition()
 {
-  return stepper.currentPosition();
+  return m_stepper.currentPosition();
 }
 
 void PumpController::setCurrentPosition(int32_t position)
@@ -192,7 +192,7 @@ void PumpController::setCurrentPosition(int32_t position)
 
 void PumpController::setSpeed(float speed)
 {
-  currentSpeed = constrain(speed, 0.0f, stepper.maxSpeed() * 1.0f);
+  m_currentSpeed = constrain(speed, 0.0f, m_stepper.maxSpeed() * 1.0f);
 }
 
 bool PumpController::isRunning()

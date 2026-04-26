@@ -18,6 +18,24 @@
 #include <TMCStepper.h>
 #include <AccelStepper.h>
 
+// Backwards-compatibility aliasing: map legacy private member names to new m_ prefix
+#define driver m_driver
+#define stepper m_stepper
+#define enPin m_enPin
+#define isEnable m_isEnable
+#define mode m_mode
+#define lastMoveTime m_lastMoveTime
+#define lastDebugTime m_lastDebugTime
+#define holdDelay m_holdDelay
+#define lastPosition m_lastPosition
+#define peristalticStepsPerML m_peristalticStepsPerML
+#define dosingStepsPerML m_dosingStepsPerML
+#define currentSpeed m_currentSpeed
+#define speedStep m_speedStep
+#define maxSpeedStep m_maxSpeedStep
+#define speedProfiles m_speedProfiles
+#define activeProfile m_activeProfile
+
 /**
  * @enum PumpMode
  * @brief Operating modes for the pump controller.
@@ -69,11 +87,11 @@ public:
   // --- Mode Control ---
 
   /// @brief Set the pump operating mode
-  void setMode(PumpMode newMode) { mode = newMode; }
+  void setMode(PumpMode newMode) { m_mode = newMode; }
   /// @brief Get the current pump operating mode
-  PumpMode getMode() const { return mode; }
+  PumpMode getMode() const { return m_mode; }
   /// @brief Set delay between hold movements (ms)
-  void setHoldDelay(unsigned long delay) { holdDelay = delay; }
+  void setHoldDelay(unsigned long delay) { m_holdDelay = delay; }
 
   // --- Movement Control ---
 
@@ -113,33 +131,33 @@ public:
   /// @brief Set current position (used for resetting/calibration)
   void setCurrentPosition(int32_t position);
   /// @brief Check if pump is currently enabled (motor energized)
-  bool getIsEnable() const { return isEnable; }
+  bool getIsEnable() const { return m_isEnable; }
 
   // --- Calibration & Steps ---
 
   /// @brief Get steps/mL for the current mode (DOSING or PERISTALTIC)
   float getStepsPerML() const
   {
-    return mode == PumpMode::DOSING ? dosingStepsPerML : peristalticStepsPerML;
+    return m_mode == PumpMode::DOSING ? m_dosingStepsPerML : m_peristalticStepsPerML;
   }
 
   /// @brief Set steps/mL for the current mode
   void setStepsPerML(float steps)
   {
-    if (mode == PumpMode::DOSING)
+    if (m_mode == PumpMode::DOSING)
     {
-      dosingStepsPerML = steps;
+      m_dosingStepsPerML = steps;
     }
     else
     {
-      peristalticStepsPerML = steps;
+      m_peristalticStepsPerML = steps;
     }
   }
 
-  float getDosingStepsPerML() const { return dosingStepsPerML; }
-  float getPeristalticStepsPerML() const { return peristalticStepsPerML; }
-  void setDosingStepsPerML(float steps) { dosingStepsPerML = steps; }
-  void setPeristalticStepsPerML(float steps) { peristalticStepsPerML = steps; }
+  float getDosingStepsPerML() const { return m_dosingStepsPerML; }
+  float getPeristalticStepsPerML() const { return m_peristalticStepsPerML; }
+  void setDosingStepsPerML(float steps) { m_dosingStepsPerML = steps; }
+  void setPeristalticStepsPerML(float steps) { m_peristalticStepsPerML = steps; }
 
   // --- Speed & Acceleration ---
 
@@ -151,17 +169,17 @@ public:
   void setMicrosteps(uint16_t ms);
   /// @brief Set target speed, clamped to [0, maxSpeed]
   void setSpeed(float speed);
-  float getSpeed() const { return currentSpeed; }
-  void setSpeedStep(int step) { speedStep = step; }
-  int getSpeedStep() const { return speedStep; }
-  void setMaxSpeed(float speed) { stepper.setMaxSpeed(speed); }
+  float getSpeed() const { return m_currentSpeed; }
+  void setSpeedStep(int step) { m_speedStep = step; }
+  int getSpeedStep() const { return m_speedStep; }
+  void setMaxSpeed(float speed) { m_stepper.setMaxSpeed(speed); }
 
   // --- Speed Profiles (Phase 3 Sprint 7) ---
 
   /// @brief Set active speed profile (0=Slow, 1=Medium, 2=Fast)
   void setSpeedProfile(uint8_t profile);
   /// @brief Get current active speed profile index (0-2)
-  uint8_t getActiveProfile() const { return activeProfile; }
+  uint8_t getActiveProfile() const { return m_activeProfile; }
   /// @brief Get speed value for a specific profile (0-2)
   float getProfileSpeed(uint8_t profile) const;
   /// @brief Set custom speed for a specific profile (0-2)
@@ -181,30 +199,30 @@ private:
   PumpController &operator=(const PumpController &) = delete;
 
   // Hardware
-  TMC2209Stepper driver;   ///< TMC2209 UART driver instance
-  AccelStepper stepper;    ///< AccelStepper motion controller
-  uint8_t enPin;           ///< Enable pin (LOW = motor on)
+  TMC2209Stepper m_driver;   ///< TMC2209 UART driver instance
+  AccelStepper m_stepper;     ///< AccelStepper motion controller
+  uint8_t m_enPin;            ///< Enable pin (LOW = motor on)
 
   // State
-  bool isEnable = false;
-  PumpMode mode = PumpMode::HOLDING;
-  unsigned long lastMoveTime = 0;
-  unsigned long lastDebugTime = 0;
-  unsigned long holdDelay = 0;
-  long lastPosition = 0;
+  bool m_isEnable = false;
+  PumpMode m_mode = PumpMode::HOLDING;
+  unsigned long m_lastMoveTime = 0;
+  unsigned long m_lastDebugTime = 0;
+  unsigned long m_holdDelay = 0;
+  long m_lastPosition = 0;
 
-  float peristalticStepsPerML = 7642.0f;
-  float dosingStepsPerML = 7642.0f;
+  float m_peristalticStepsPerML = 7642.0f;
+  float m_dosingStepsPerML = 7642.0f;
 
   // Speed
-  float currentSpeed = 0;
-  int speedStep = 2000;     ///< Speed adjustment increment
-  int maxSpeedStep = 4000;  ///< Maximum allowed speed step
+  float m_currentSpeed = 0;
+  int m_speedStep = 2000;     ///< Speed adjustment increment
+  int m_maxSpeedStep = 4000;  ///< Maximum allowed speed step
 
   // Speed Profiles (Phase 3 Sprint 7)
   static constexpr uint8_t SPEED_PROFILE_COUNT = 3;
-  float speedProfiles[SPEED_PROFILE_COUNT] = {10000.0f, 20000.0f, 40000.0f}; ///< Slow, Medium, Fast
-  uint8_t activeProfile = 1;  ///< Default to Medium (index 1)
+  float m_speedProfiles[SPEED_PROFILE_COUNT] = {10000.0f, 20000.0f, 40000.0f}; ///< Slow, Medium, Fast
+  uint8_t m_activeProfile = 1;  ///< Default to Medium (index 1)
 
   void updateCurrentPosition();
 };
