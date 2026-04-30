@@ -1,0 +1,9 @@
+services:
+  platformio:
+    build: .
+    volumes:
+      - .:/project
+      - /dev:/dev
+    devices:
+      - "/dev/cu.usbmodem31401:/dev/cu.usbmodem31401"
+    tty: true
