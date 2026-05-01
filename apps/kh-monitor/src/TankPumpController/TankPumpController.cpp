@@ -64,9 +64,14 @@ void TankPumpController::runTimed(PumpDirection direction, uint32_t durationMs)
   Serial.printf("[TANK] Timed run: dir=%d, %lu ms\n", static_cast<int>(direction), durationMs);
 }
 
+bool TankPumpController::update()
+{
+  return m_pump.update();
+}
+
 bool TankPumpController::updateTimedRun()
 {
-  return m_pump.updateTimedRun();
+  return m_pump.update();
 }
 
 uint32_t TankPumpController::getRemainingTime() const

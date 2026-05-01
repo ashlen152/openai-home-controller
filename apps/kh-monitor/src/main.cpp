@@ -1,108 +1,95 @@
 #include <Arduino.h>
 
-#include "RefPumpController/RefPumpController.h"
-#include "TankPumpController/TankPumpController.h"
+#include "PumpTaskManager/PumpTaskManager.h"
 
-#ifdef AIR_PIN
-static constexpr uint8_t AIR_PUMP_PIN = AIR_PIN;
-#else
-static constexpr uint8_t AIR_PUMP_PIN = 15;
-#endif
+static unsigned long loopCount = 0;
+static unsigned long testStartTime = 0;
+static uint8_t testPhase = 0;
 
-static constexpr uint8_t LED_PIN = 2;
+static constexpr uint32_t PHASE_DURATION = 2000;
+static constexpr uint32_t IDLE_DURATION = 1000;
+
+static constexpr uint8_t RGB_LED_PIN = 48;
+
+void setLEDColor(uint8_t r, uint8_t g, uint8_t b) {
+  rgbLedWrite(RGB_LED_PIN, r, g, b);
+}
+
+void runTestSequence() {
+  unsigned long elapsed = millis() - testStartTime;
+  uint8_t phase = elapsed / (PHASE_DURATION + IDLE_DURATION);
+
+  if (phase != testPhase) {
+    testPhase = phase;
+    PumpTaskManager::getInstance().stop(1);
+    PumpTaskManager::getInstance().stop(2);
+    Serial.printf("[TEST] Phase %d\n", testPhase);
+  }
+
+  uint32_t phaseTime = elapsed % (PHASE_DURATION + IDLE_DURATION);
+
+  if (phaseTime < PHASE_DURATION) {
+    switch (testPhase % 4) {
+    case 0:
+      Serial.printf("[TEST] REF FORWARD (phaseTime=%lu)\n", phaseTime);
+      setLEDColor(0, 255, 0);
+      PumpTaskManager::getInstance().forward(1);
+      break;
+    case 1:
+      Serial.printf("[TEST] REF REVERSE (phaseTime=%lu)\n", phaseTime);
+      setLEDColor(0, 0, 255);
+      PumpTaskManager::getInstance().reverse(1);
+      break;
+    case 2:
+      Serial.printf("[TEST] TANK FORWARD (phaseTime=%lu)\n", phaseTime);
+      setLEDColor(255, 255, 0);
+      PumpTaskManager::getInstance().forward(2);
+      break;
+    case 3:
+      Serial.printf("[TEST] TANK REVERSE (phaseTime=%lu)\n", phaseTime);
+      setLEDColor(255, 0, 0);
+      PumpTaskManager::getInstance().reverse(2);
+      break;
+    }
+  } else {
+    setLEDColor(0, 0, 0);
+  }
+}
 
 void setup() {
   Serial.begin(115200);
+  delay(3000);
 
-  Serial.println("\nPH-4502C Meter Configuration:");
-  Serial.println("ADC Resolution: 12-bit");
-  Serial.println("ADC Attenuation: 11dB (0-3.9V range)");
-
-  pinMode(LED_PIN, OUTPUT);
-  digitalWrite(LED_PIN, HIGH);
-
-  delay(2000);
-  digitalWrite(LED_PIN, LOW);
-  delay(500);
-
-  Serial.begin(115200);
-  delay(500);
   Serial.println("");
   Serial.println("=== KH Monitor Starting ===");
-  Serial.println(__FILE__);
-  Serial.println(__DATE__);
-  Serial.println(__TIME__);
+  Serial.printf("File: %s\n", __FILE__);
+  Serial.printf("Date: %s\n", __DATE__);
+  Serial.printf("Time: %s\n", __TIME__);
 
-  digitalWrite(LED_PIN, HIGH);
-  delay(200);
-  digitalWrite(LED_PIN, LOW);
+  setLEDColor(255, 255, 255);
+  delay(500);
+  setLEDColor(0, 0, 0);
 
-  RefPumpController::getInstance().init();
-  RefPumpController::getInstance().begin();
-
-  TankPumpController::getInstance().init();
-  TankPumpController::getInstance().begin();
-
-#ifdef AIR_PIN
-  pinMode(AIR_PUMP_PIN, OUTPUT);
-  digitalWrite(AIR_PUMP_PIN, LOW);
-  Serial.println("Air pump pin configured");
-#endif
+  PumpTaskManager::getInstance().begin();
 
   Serial.println("=== KH Monitor Ready ===");
-  Serial.println("Commands:");
-  Serial.println("1f -> REF forward");
-  Serial.println("1r -> REF reverse");
-  Serial.println("1s -> REF stop");
-  Serial.println("2f -> TANK forward");
-  Serial.println("2r -> TANK reverse");
-  Serial.println("2s -> TANK stop");
-  Serial.println("1t3000 -> REF run 3 seconds");
-  Serial.println("2t5000 -> TANK run 5 seconds");
+  Serial.println("");
+  Serial.println("[TEST] Starting sequence test...");
+  Serial.println("[TEST] 0=REF FWD=GREEN, 1=REF REV=BLUE, 2=TANK FWD=YELLOW, "
+                 "3=TANK REV=RED");
 
-  digitalWrite(LED_PIN, HIGH);
-  delay(200);
-  digitalWrite(LED_PIN, LOW);
+  testStartTime = millis();
 }
 
 void loop() {
-  RefPumpController::getInstance().updateTimedRun();
-  TankPumpController::getInstance().updateTimedRun();
+  loopCount++;
+  PumpTaskManager::getInstance().update();
 
-  if (Serial.available()) {
-    String cmd = Serial.readStringUntil('\n');
-    cmd.trim();
+  runTestSequence();
 
-    if (cmd.length() < 2)
-      return;
-
-    int pumpId = cmd.charAt(0) - '0';
-    char action = cmd.charAt(1);
-
-    if (pumpId == 1) {
-      if (action == 'f') {
-        RefPumpController::getInstance().forward();
-      } else if (action == 'r') {
-        RefPumpController::getInstance().reverse();
-      } else if (action == 's') {
-        RefPumpController::getInstance().stop();
-      } else if (action == 't') {
-        int duration = cmd.substring(2).toInt();
-        RefPumpController::getInstance().runTimed(duration);
-      }
-    } else if (pumpId == 2) {
-      if (action == 'f') {
-        TankPumpController::getInstance().forward();
-      } else if (action == 'r') {
-        TankPumpController::getInstance().reverse();
-      } else if (action == 's') {
-        TankPumpController::getInstance().stop();
-      } else if (action == 't') {
-        int duration = cmd.substring(2).toInt();
-        TankPumpController::getInstance().runTimed(duration);
-      }
-    }
+  if (loopCount % 25 == 0) {
+    Serial.printf("[LOOP %lu] Phase: %d\n", loopCount, testPhase);
   }
 
-  delay(10);
+  delay(20);
 }

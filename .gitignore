@@ -10,6 +10,9 @@ dist/
 .env.local
 .env.*.local
 **/.env
+**/compile_commands.json
+**/.clangd
+**/.cache
 
 # Playwright (auth state - DO NOT COMMIT)
 playwright/.auth/

@@ -64,9 +64,14 @@ void RefPumpController::runTimed(PumpDirection direction, uint32_t durationMs)
   Serial.printf("[REF] Timed run: dir=%d, %lu ms\n", static_cast<int>(direction), durationMs);
 }
 
+bool RefPumpController::update()
+{
+  return m_pump.update();
+}
+
 bool RefPumpController::updateTimedRun()
 {
-  return m_pump.updateTimedRun();
+  return m_pump.update();
 }
 
 uint32_t RefPumpController::getRemainingTime() const

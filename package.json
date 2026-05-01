@@ -23,7 +23,12 @@
     "esp32:log": "source ./apps/firmware/venv/bin/activate ; python3 ./apps/firmware/log_all.py",
     "esp32:upload": "source ./apps/firmware/venv/bin/activate ; cd ./apps/firmware ; pio run --target upload -e esp32dev",
     "kh:upload": "cd ./apps/kh-monitor && pio run --target upload -e esp32-s3-devkitm-1",
-    "kh:monitor": "cd ./apps/kh-monitor && pio device monitor -e esp32-s3-devkitm-1"
+    "kh:monitor": "source apps/firmware/venv/bin/activate ; python3 ./log_all.py",
+    "kh:upload:monitor": "npm run kh:upload && npm run kh:monitor",
+    "monitor": "source ./apps/firmware/venv/bin/activate ; python3 ./log_all.py",
+    "test:upload": "cd ./apps/esp32-s3-rbg-led && pio run --target upload -e esp32-s3-devkitm-1",
+    "test:upload:monitor": "npm run test:upload && npm run test:monitor",
+    "test:monitor": "cd ./apps/esp32-s3-rbg-led && pio device monitor -e esp32-s3-devkitm-1"
   },
   "engines": {
     "node": ">=18.0.0"

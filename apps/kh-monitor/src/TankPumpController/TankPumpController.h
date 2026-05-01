@@ -32,14 +32,17 @@ public:
 
   void runTimed(uint32_t durationMs);
   void runTimed(PumpDirection direction, uint32_t durationMs);
+  bool update();
   bool updateTimedRun();
   uint32_t getRemainingTime() const;
 
   bool isRunning() const;
   PumpDirection getDirection() const { return m_pump.getDirection(); }
   bool isTimedRunActive() const { return m_pump.isTimedRunActive(); }
+  PumpState getState() const { return m_pump.getState(); }
 
   void setReverseDelay(uint16_t delayMs) { m_pump.setReverseDelay(delayMs); }
+  void setTimeout(uint32_t timeoutMs) { m_pump.setTimeout(timeoutMs); }
 
 private:
   TankPumpController();
