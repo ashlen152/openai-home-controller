@@ -437,6 +437,7 @@ void KHStateMachine::handle_AERATE_REFERENCE()
 #if USE_MOCK_PH
     if (m_phProbe && m_phProbe->isMockEnabled()) {
       m_phProbe->setMockPostAeration(true);
+      m_phProbe->setMockAerationStart(millis());
     }
 #endif
   }
@@ -561,6 +562,7 @@ void KHStateMachine::handle_AERATE_TANK()
 #if USE_MOCK_PH
     if (m_phProbe && m_phProbe->isMockEnabled()) {
       m_phProbe->setMockPostAeration(true);
+      m_phProbe->setMockAerationStart(millis());
     }
 #endif
   }

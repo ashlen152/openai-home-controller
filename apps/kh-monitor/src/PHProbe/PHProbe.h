@@ -154,8 +154,10 @@ public:
   void setMockDelta(float delta) { m_mockDelta = delta; }
   void setMockRefDelta(float delta) { m_mockRefDelta = delta; }
   void setMockTankDelta(float delta) { m_mockTankDelta = delta; }
+  void setMockEquilibrium(float eq) { m_mockEquilibrium = eq; }
   void setMockPostAeration(bool post) { m_mockPostAeration = post; }
   void setMockIsTank(bool isTank) { m_mockIsTank = isTank; }
+  void setMockAerationStart(unsigned long time) { m_mockAerationStart = time; }
   void enableMock(bool enable) { m_mockEnabled = enable; }
   bool isMockEnabled() const { return m_mockEnabled; }
 #endif
@@ -183,6 +185,8 @@ private:
   float m_mockDelta;
   float m_mockRefDelta;
   float m_mockTankDelta;
+  float m_mockEquilibrium;
+  unsigned long m_mockAerationStart;
   bool m_mockEnabled;
   bool m_mockPostAeration;
   bool m_mockIsTank;

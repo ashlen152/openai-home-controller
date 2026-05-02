@@ -141,8 +141,9 @@ void setup() {
   PHProbe::getInstance().setMockPH(6.5f);
   PHProbe::getInstance().setMockRefDelta(1.3f);
   PHProbe::getInstance().setMockTankDelta(0.9f);
+  PHProbe::getInstance().setMockEquilibrium(8.2f);
   PHProbe::getInstance().setMockPostAeration(false);
-  Serial.println("[MAIN] Mock: base=6.5, refDelta=1.3, tankDelta=0.9");
+  Serial.println("[MAIN] Mock: base=6.5, eq=8.2, ref=1.3, tank=0.9");
 #endif
 
   KHSolver::getInstance().begin();
