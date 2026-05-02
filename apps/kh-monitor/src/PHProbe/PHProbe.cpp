@@ -130,7 +130,8 @@ float PHProbe::readRawVoltage()
       float totalDelta = equilibrium - m_mockPHValue;
       float remaining = totalDelta - targetDelta;
       float targetPH = equilibrium - remaining;
-      float progress = min(elapsed / 60000.0f, 1.0f);
+      float duration = 900000.0f;  // 15 minutes
+      float progress = min(elapsed / duration, 1.0f);
       float eased = 1.0f - pow(1.0f - progress, 3.0f);
       phValue = m_mockPHValue + (targetPH - m_mockPHValue) * eased;
     }
