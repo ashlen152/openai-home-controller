@@ -11,6 +11,7 @@ PWMPumpController::PWMPumpController()
   , m_in2Pin(0)
   , m_reverseDelay(DEFAULT_REVERSE_DELAY)
   , m_timeoutMs(DEFAULT_TIMEOUT_MS)
+  , m_flowRateMlPerSec(DEFAULT_FLOW_RATE_ML_PER_SEC)
   , m_lastDirection(PumpDirection::STOP)
   , m_currentDirection(PumpDirection::STOP)
   , m_state(PumpState::IDLE)
@@ -190,4 +191,23 @@ uint32_t PWMPumpController::getRemainingTime() const
 bool PWMPumpController::isRunning() const
 {
   return m_state == PumpState::RUNNING;
+}
+
+void PWMPumpController::runVolume(PumpDirection direction, float volumeMl)
+{
+  if (direction == PumpDirection::STOP || volumeMl <= 0.0f)
+  {
+    stop();
+    return;
+  }
+
+  float rate = m_flowRateMlPerSec;
+  if (rate <= 0.0f) rate = DEFAULT_FLOW_RATE_ML_PER_SEC;
+
+  uint32_t durationMs = static_cast<uint32_t>((volumeMl / rate) * 1000.0f);
+
+  runTimed(direction, durationMs);
+
+  Serial.printf("[PUMP] Volume run: %.1fml -> %lumsec (%.1fml/sec)\n",
+    volumeMl, durationMs, rate);
 }

@@ -155,19 +155,19 @@ void KHStateMachine::update()
           m_phProbe->setMockPostAeration(false);
         }
 #endif
-        transitionTo(KHState::DRAIN);
+        transitionTo(KHState::PARTIAL_DRAIN);
       }
       break;
 
-    case KHState::DRAIN:
-      handle_DRAIN();
-      canTransition = canExit_DRAIN();
-      if (canTransition) transitionTo(KHState::FLUSH);
+    case KHState::PARTIAL_DRAIN:
+      handle_PARTIAL_DRAIN();
+      canTransition = canExit_PARTIAL_DRAIN();
+      if (canTransition) transitionTo(KHState::FLUSH_CHAMBER);
       break;
 
-    case KHState::FLUSH:
-      handle_FLUSH();
-      canTransition = canExit_FLUSH();
+    case KHState::FLUSH_CHAMBER:
+      handle_FLUSH_CHAMBER();
+      canTransition = canExit_FLUSH_CHAMBER();
       if (canTransition) transitionTo(KHState::FILL_TANK);
       break;
 
@@ -222,12 +222,12 @@ void KHStateMachine::update()
     case KHState::DOSE:
       handle_DOSE();
       canTransition = canExit_DOSE();
-      if (canTransition) transitionTo(KHState::CLEAN_TUBE);
+      if (canTransition) transitionTo(KHState::FINALIZE_CHAMBER);
       break;
 
-    case KHState::CLEAN_TUBE:
-      handle_CLEAN_TUBE();
-      canTransition = canExit_CLEAN_TUBE();
+    case KHState::FINALIZE_CHAMBER:
+      handle_FINALIZE_CHAMBER();
+      canTransition = canExit_FINALIZE_CHAMBER();
       if (canTransition) transitionTo(KHState::IDLE);
       break;
 
@@ -313,15 +313,18 @@ const char* KHStateMachine::getStateName() const
 {
   switch (m_currentState) {
     case KHState::IDLE: return "IDLE";
+    case KHState::PRE_FLUSH: return "PRE_FLUSH";
     case KHState::FILL_REFERENCE: return "FILL_REFERENCE";
+    case KHState::FLUSH_LINE: return "FLUSH_LINE";
     case KHState::STABILIZE_REFERENCE: return "STABILIZE_REFERENCE";
     case KHState::MEASURE_REFERENCE_INITIAL: return "MEASURE_REFERENCE_INITIAL";
     case KHState::AERATE_REFERENCE: return "AERATE_REFERENCE";
     case KHState::WAIT_AFTER_AERATION_REF: return "WAIT_AFTER_AERATION_REF";
     case KHState::MEASURE_REFERENCE_FINAL: return "MEASURE_REFERENCE_FINAL";
-    case KHState::DRAIN: return "DRAIN";
-    case KHState::FLUSH: return "FLUSH";
+    case KHState::PARTIAL_DRAIN: return "PARTIAL_DRAIN";
+    case KHState::FLUSH_CHAMBER: return "FLUSH_CHAMBER";
     case KHState::FILL_TANK: return "FILL_TANK";
+    case KHState::FLUSH_LINE_TANK: return "FLUSH_LINE_TANK";
     case KHState::STABILIZE_TANK: return "STABILIZE_TANK";
     case KHState::MEASURE_TANK_INITIAL: return "MEASURE_TANK_INITIAL";
     case KHState::AERATE_TANK: return "AERATE_TANK";
@@ -329,7 +332,7 @@ const char* KHStateMachine::getStateName() const
     case KHState::MEASURE_TANK_FINAL: return "MEASURE_TANK_FINAL";
     case KHState::CALCULATE_KH: return "CALCULATE_KH";
     case KHState::DOSE: return "DOSE";
-    case KHState::CLEAN_TUBE: return "CLEAN_TUBE";
+    case KHState::FINALIZE_CHAMBER: return "FINALIZE_CHAMBER";
     case KHState::ERROR: return "ERROR";
     case KHState::CALIB_IDLE: return "CALIB_IDLE";
     case KHState::CALIB_MEASURE: return "CALIB_MEASURE";
@@ -481,28 +484,30 @@ bool KHStateMachine::canExit_MEASURE_REFERENCE_FINAL()
   return checkStability() || checkStabilityTimeout();
 }
 
-void KHStateMachine::handle_DRAIN()
+void KHStateMachine::handle_PARTIAL_DRAIN()
 {
   if (!m_pumpOrAerationRunning) {
-    if (m_verbose) Serial.println("[KHState] Starting drain pump (reverse)");
-    startPump(KHPump::DRAIN, false, m_config.drainTimeMs);
+    if (m_verbose) Serial.println("[KHState] Starting partial drain (displacement)");
+    float drainVol = m_fluidConfig.getDeadVolumeMl() * 0.5f;
+    startPumpVolume(KHPump::REFERENCE, false, drainVol);
   }
 }
 
-bool KHStateMachine::canExit_DRAIN()
+bool KHStateMachine::canExit_PARTIAL_DRAIN()
 {
   return checkPumpOrAerationComplete();
 }
 
-void KHStateMachine::handle_FLUSH()
+void KHStateMachine::handle_FLUSH_CHAMBER()
 {
   if (!m_pumpOrAerationRunning) {
-    if (m_verbose) Serial.println("[KHState] Starting flush pump");
-    startPump(KHPump::FLUSH, true, m_config.flushTimeMs);
+    if (m_verbose) Serial.println("[KHState] Starting chamber flush (displacement)");
+    float flushVol = m_fluidConfig.getFlushVolumeMl();
+    startPumpVolume(KHPump::REFERENCE, true, flushVol);
   }
 }
 
-bool KHStateMachine::canExit_FLUSH()
+bool KHStateMachine::canExit_FLUSH_CHAMBER()
 {
   return checkPumpOrAerationComplete();
 }
@@ -633,15 +638,16 @@ bool KHStateMachine::canExit_DOSE()
   return (millis() - m_stateEntryTime >= m_config.doseTimeMs);
 }
 
-void KHStateMachine::handle_CLEAN_TUBE()
+void KHStateMachine::handle_FINALIZE_CHAMBER()
 {
   if (!m_pumpOrAerationRunning) {
-    if (m_verbose) Serial.println("[KHState] Starting tank pump for CLEAN_TUBE");
-    startPump(KHPump::TANK, true, m_config.cleanTubeTimeMs);
+    if (m_verbose) Serial.println("[KHState] FINALIZE_CHAMBER: ensure probe stays wet");
+    float flushVol = m_fluidConfig.getFlushVolumeMl();
+    startPumpVolume(KHPump::TANK, false, flushVol);
   }
 }
 
-bool KHStateMachine::canExit_CLEAN_TUBE()
+bool KHStateMachine::canExit_FINALIZE_CHAMBER()
 {
   return checkPumpOrAerationComplete();
 }
@@ -680,6 +686,30 @@ void KHStateMachine::startPump(KHPump pump, bool forward, unsigned long duration
     case KHPump::TANK:
       if (m_tankPump) {
         m_tankPump->runTimed(forward ? PumpDirection::FORWARD : PumpDirection::REVERSE, durationMs);
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+void KHStateMachine::startPumpVolume(KHPump pump, bool forward, float volumeMl)
+{
+  m_currentPump = pump;
+  m_pumpDirectionForward = forward;
+  m_pumpOrAerationRunning = true;
+  
+  float stepsPerMl = m_config.stepsPerMl;
+  
+  switch (pump) {
+    case KHPump::REFERENCE:
+      if (m_refPump) {
+        m_refPump->runVolume(forward ? PumpDirection::FORWARD : PumpDirection::REVERSE, volumeMl);
+      }
+      break;
+    case KHPump::TANK:
+      if (m_tankPump) {
+        m_tankPump->runVolume(forward ? PumpDirection::FORWARD : PumpDirection::REVERSE, volumeMl);
       }
       break;
     default:

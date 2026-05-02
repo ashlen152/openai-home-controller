@@ -28,9 +28,15 @@ void updateLEDForState(KHState state) {
     case KHState::IDLE:
       setLEDColor(0, 0, 0);
       break;
+    case KHState::PRE_FLUSH:
     case KHState::FILL_REFERENCE:
     case KHState::FILL_TANK:
       setLEDColor(255, 255, 255);
+      break;
+    case KHState::FLUSH_LINE:
+    case KHState::FLUSH_LINE_TANK:
+    case KHState::FLUSH_CHAMBER:
+      setLEDColor(128, 128, 128);
       break;
     case KHState::STABILIZE_REFERENCE:
     case KHState::STABILIZE_TANK:
@@ -46,8 +52,7 @@ void updateLEDForState(KHState state) {
     case KHState::AERATE_TANK:
       setLEDColor(0, 128, 255);
       break;
-    case KHState::DRAIN:
-    case KHState::FLUSH:
+    case KHState::PARTIAL_DRAIN:
       setLEDColor(255, 128, 0);
       break;
     case KHState::CALCULATE_KH:
@@ -62,7 +67,7 @@ void updateLEDForState(KHState state) {
     case KHState::DOSE:
       setLEDColor(0, 200, 100);
       break;
-    case KHState::CLEAN_TUBE:
+    case KHState::FINALIZE_CHAMBER:
       setLEDColor(100, 100, 255);
       break;
     case KHState::ERROR:
@@ -151,12 +156,14 @@ void setup() {
   KHStateConfig config;
   config.fillTimeMs = 5000UL;
   config.stabilizeTimeMs = 3000UL;
-  config.aerationTimeMs = 900000UL;  // 15 minutes
+  config.aerationTimeMs = 900000UL;
   config.waitAfterAerationMs = 5000UL;
-  config.drainTimeMs = 8000UL;
-  config.flushTimeMs = 10000UL;
   config.doseTimeMs = 3000UL;
   config.cleanTubeTimeMs = 5000UL;
+  config.referenceVolumeMl = 20.0f;
+  config.tankVolumeMl = 20.0f;
+  config.doseVolumeMl = 5.0f;
+  config.stepsPerMl = 100.0f;
 
   KHStateMachine::getInstance().begin(
     &RefPumpController::getInstance(),

@@ -64,6 +64,11 @@ void RefPumpController::runTimed(PumpDirection direction, uint32_t durationMs)
   Serial.printf("[REF] Timed run: dir=%d, %lu ms\n", static_cast<int>(direction), durationMs);
 }
 
+void RefPumpController::runVolume(PumpDirection direction, float volumeMl)
+{
+  m_pump.runVolume(direction, volumeMl);
+}
+
 bool RefPumpController::update()
 {
   return m_pump.update();

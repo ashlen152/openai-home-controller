@@ -32,6 +32,9 @@ public:
 
   void runTimed(uint32_t durationMs);
   void runTimed(PumpDirection direction, uint32_t durationMs);
+
+  void runVolume(PumpDirection direction, float volumeMl);
+
   bool update();
   bool updateTimedRun();
   uint32_t getRemainingTime() const;

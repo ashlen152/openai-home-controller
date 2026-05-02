@@ -20,15 +20,18 @@ enum class KHPump
 enum class KHState
 {
   IDLE,
+  PRE_FLUSH,
   FILL_REFERENCE,
+  FLUSH_LINE,
   STABILIZE_REFERENCE,
   MEASURE_REFERENCE_INITIAL,
   AERATE_REFERENCE,
   WAIT_AFTER_AERATION_REF,
   MEASURE_REFERENCE_FINAL,
-  DRAIN,
-  FLUSH,
+  PARTIAL_DRAIN,
+  FLUSH_CHAMBER,
   FILL_TANK,
+  FLUSH_LINE_TANK,
   STABILIZE_TANK,
   MEASURE_TANK_INITIAL,
   AERATE_TANK,
@@ -36,7 +39,7 @@ enum class KHState
   MEASURE_TANK_FINAL,
   CALCULATE_KH,
   DOSE,
-  CLEAN_TUBE,
+  FINALIZE_CHAMBER,
   ERROR,
   // Calibration mode states
   CALIB_IDLE,
@@ -45,16 +48,38 @@ enum class KHState
   CALIB_DONE
 };
 
+struct FluidSystemConfig
+{
+  float tubeVolumeMl = 2.0f;
+  float pumpHeadVolumeMl = 1.5f;
+  float chamberVolumeMl = 3.0f;
+  float referenceVolumeMl = 20.0f;
+  float tankVolumeMl = 20.0f;
+  float doseVolumeMl = 5.0f;
+  float flushMultiplier = 2.5f;
+
+  float getDeadVolumeMl() const {
+    return tubeVolumeMl + pumpHeadVolumeMl + chamberVolumeMl;
+  }
+  
+  float getFlushVolumeMl() const {
+    return getDeadVolumeMl() * flushMultiplier;
+  }
+};
+
 struct KHStateConfig
 {
   unsigned long fillTimeMs = 5000UL;
   unsigned long stabilizeTimeMs = 3000UL;
-  unsigned long aerationTimeMs = 60000UL;
+  unsigned long aerationTimeMs = 900000UL;
   unsigned long waitAfterAerationMs = 5000UL;
-  unsigned long drainTimeMs = 8000UL;
-  unsigned long flushTimeMs = 10000UL;
   unsigned long doseTimeMs = 3000UL;
   unsigned long cleanTubeTimeMs = 5000UL;
+  
+  float referenceVolumeMl = 20.0f;
+  float tankVolumeMl = 20.0f;
+  float doseVolumeMl = 5.0f;
+  float stepsPerMl = 100.0f;
 };
 
 struct KHStateInfo
@@ -140,11 +165,11 @@ private:
   void handle_MEASURE_REFERENCE_FINAL();
   bool canExit_MEASURE_REFERENCE_FINAL();
 
-  void handle_DRAIN();
-  bool canExit_DRAIN();
+  void handle_PARTIAL_DRAIN();
+  bool canExit_PARTIAL_DRAIN();
 
-  void handle_FLUSH();
-  bool canExit_FLUSH();
+  void handle_FLUSH_CHAMBER();
+  bool canExit_FLUSH_CHAMBER();
 
   void handle_FILL_TANK();
   bool canExit_FILL_TANK();
@@ -170,8 +195,8 @@ private:
   void handle_DOSE();
   bool canExit_DOSE();
 
-  void handle_CLEAN_TUBE();
-  bool canExit_CLEAN_TUBE();
+  void handle_FINALIZE_CHAMBER();
+  bool canExit_FINALIZE_CHAMBER();
 
   void handle_ERROR();
   bool canExit_ERROR();
@@ -194,6 +219,7 @@ private:
   bool m_verbose;
 
   KHStateConfig m_config;
+  FluidSystemConfig m_fluidConfig;
 
   String m_errorMessage;
 
@@ -232,6 +258,7 @@ private:
   bool processCalibCommand(const String& cmd);
 
   void startPump(KHPump pump, bool forward, unsigned long durationMs);
+  void startPumpVolume(KHPump pump, bool forward, float volumeMl);
   void startAeration(unsigned long durationMs);
   void stopAllPumps();
   bool isPumpOrAerationRunning();

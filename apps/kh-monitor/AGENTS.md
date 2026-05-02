@@ -105,15 +105,23 @@ KHSolver::getInstance()
 KHStateMachine::getInstance()
 ```
 
-## Normal KH State Machine
+## Normal KH State Machine (Volume-Based)
 
 ```
-IDLE → FILL_REFERENCE → STABILIZE_REFERENCE → MEASURE_REFERENCE_INITIAL
+IDLE → PRE_FLUSH → FILL_REFERENCE → FLUSH_LINE → STABILIZE_REFERENCE → MEASURE_REFERENCE_INITIAL
     → AERATE_REFERENCE → WAIT_AFTER_AERATION_REF → MEASURE_REFERENCE_FINAL
-    → DRAIN → FLUSH → FILL_TANK → STABILIZE_TANK → MEASURE_TANK_INITIAL
-    → AERATE_TANK → WAIT_AFTER_AERATION_TANK → MEASURE_TANK_FINAL
-    → CALCULATE_KH → DOSE → CLEAN_TUBE → IDLE
+    → PARTIAL_DRAIN → FLUSH_CHAMBER → FILL_TANK → FLUSH_LINE_TANK
+    → STABILIZE_TANK → MEASURE_TANK_INITIAL → AERATE_TANK
+    → WAIT_AFTER_AERATION_TANK → MEASURE_TANK_FINAL
+    → CALCULATE_KH → DOSE → FINALIZE_CHAMBER → IDLE
 ```
+
+**Key changes:**
+- Displacement model (NEW fluid → PUSH → OLD fluid out)
+- Volume-based pump control (ml, not time)
+- Dead volume tracking + flush calculations
+- Probe chamber stays wet (FINALIZE_CHAMBER)
+- DOSE handler: TODO (not yet implemented)
 
 ## Calibration Mode State Machine
 
@@ -157,6 +165,20 @@ CALIB_IDLE → CALIB_MEASURE → (normal measurement) → CALIB_STORE → CALIB_
 - NEVER use blocking loops
 - All timing must be non-blocking
 - Serial logging for every state transition
+- Volume-based pump control: use runVolume(ml), NOT runTimed(ms)
+
+## DC Pump Flow Rate Calibration
+
+DC pumps use time-based approximation:
+```
+time_ms = (volume_ml / flow_rate_ml_per_sec) * 1000
+```
+
+Default flow rate: 2.0 ml/sec (calibrate your pump)
+```cpp
+refPump.setFlowRateMlPerSec(1.5);   // adjust to your pump
+tankPump.setFlowRateMlPerSec(1.5);
+```
 
 ## Notes for Agents
 

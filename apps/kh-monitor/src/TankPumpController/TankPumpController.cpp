@@ -79,6 +79,11 @@ uint32_t TankPumpController::getRemainingTime() const
   return m_pump.getRemainingTime();
 }
 
+void TankPumpController::runVolume(PumpDirection direction, float volumeMl)
+{
+  m_pump.runVolume(direction, volumeMl);
+}
+
 bool TankPumpController::isRunning() const
 {
   return m_pump.isRunning();
