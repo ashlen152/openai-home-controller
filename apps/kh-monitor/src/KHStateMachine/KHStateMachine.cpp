@@ -148,7 +148,15 @@ void KHStateMachine::update()
     case KHState::MEASURE_REFERENCE_FINAL:
       handle_MEASURE_REFERENCE_FINAL();
       canTransition = canExit_MEASURE_REFERENCE_FINAL();
-      if (canTransition) transitionTo(KHState::DRAIN);
+      if (canTransition) {
+#if USE_MOCK_PH
+        if (m_phProbe && m_phProbe->isMockEnabled()) {
+          m_phProbe->setMockIsTank(true);
+          m_phProbe->setMockPostAeration(false);
+        }
+#endif
+        transitionTo(KHState::DRAIN);
+      }
       break;
 
     case KHState::DRAIN:

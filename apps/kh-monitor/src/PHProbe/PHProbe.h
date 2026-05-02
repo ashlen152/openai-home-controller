@@ -152,7 +152,10 @@ public:
 #if USE_MOCK_PH
   void setMockPH(float value) { m_mockPHValue = value; }
   void setMockDelta(float delta) { m_mockDelta = delta; }
+  void setMockRefDelta(float delta) { m_mockRefDelta = delta; }
+  void setMockTankDelta(float delta) { m_mockTankDelta = delta; }
   void setMockPostAeration(bool post) { m_mockPostAeration = post; }
+  void setMockIsTank(bool isTank) { m_mockIsTank = isTank; }
   void enableMock(bool enable) { m_mockEnabled = enable; }
   bool isMockEnabled() const { return m_mockEnabled; }
 #endif
@@ -178,8 +181,11 @@ private:
 #if USE_MOCK_PH
   float m_mockPHValue;
   float m_mockDelta;
+  float m_mockRefDelta;
+  float m_mockTankDelta;
   bool m_mockEnabled;
   bool m_mockPostAeration;
+  bool m_mockIsTank;
 #endif
   
   // Filter state

@@ -41,8 +41,11 @@ PHProbe::PHProbe()
 #if USE_MOCK_PH
   , m_mockPHValue(7.0f)
   , m_mockDelta(0.5f)
+  , m_mockRefDelta(0.5f)
+  , m_mockTankDelta(0.7f)
   , m_mockEnabled(false)
   , m_mockPostAeration(false)
+  , m_mockIsTank(false)
 #endif
   {
   }
@@ -119,7 +122,8 @@ float PHProbe::readRawVoltage()
   if (m_mockEnabled) {
     float phValue = m_mockPHValue;
     if (m_mockPostAeration) {
-      phValue += m_mockDelta;
+      float delta = m_mockIsTank ? m_mockTankDelta : m_mockRefDelta;
+      phValue += delta;
     }
     float voltage = phValue / m_slope - m_offset / m_slope;
     return voltage;
