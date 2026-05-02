@@ -3,6 +3,11 @@
 
 #include <Arduino.h>
 
+// Build flag to enable mock mode (set USE_MOCK_PH=1 in platformio.ini)
+#ifndef USE_MOCK_PH
+#define USE_MOCK_PH 0
+#endif
+
 /**
  * PHProbe - Advanced pH Sensor Module for ESP32
  * 
@@ -13,6 +18,7 @@
  * - EEPROM calibration storage with wear leveling
  * - Configurable slope/offset for different probes
  * - Debug logging (raw vs filtered)
+ * - Mock mode for testing without real sensor
  */
 class PHProbe
 {
@@ -136,12 +142,18 @@ public:
    */
   void resetCalibration();
   
-  // ===== Configuration =====
-  
+// ===== Configuration =====
+
   void setDebugEnabled(bool enable) { m_debugEnabled = enable; }
   void setStabilityThreshold(float threshold) { m_stabilityThreshold = threshold; }
   void setStabilityDuration(unsigned long duration_ms) { m_stabilityDurationMs = duration_ms; }
   void setMinReadInterval(unsigned long interval_ms) { m_minReadIntervalMs = interval_ms; }
+
+#if USE_MOCK_PH
+  void setMockPH(float value) { m_mockPHValue = value; }
+  void enableMock(bool enable) { m_mockEnabled = enable; }
+  bool isMockEnabled() const { return m_mockEnabled; }
+#endif
   
   // ===== Getters =====
   
@@ -156,10 +168,15 @@ private:
   // ADC configuration
   uint8_t m_adcPin;
   uint8_t m_adcChannel;
-  
+
   // Calibration parameters
   float m_slope;
   float m_offset;
+
+#if USE_MOCK_PH
+  float m_mockPHValue;
+  bool m_mockEnabled;
+#endif
   
   // Filter state
   float m_medianBuffer[MEDIAN_FILTER_SIZE];

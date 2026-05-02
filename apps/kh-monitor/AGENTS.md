@@ -1,4 +1,23 @@
-# AGENTS.md
+# KH Monitor System (ESP32-S3)
+
+## Runtime Configuration
+
+| Setting | Value | File:Line |
+|---------|-------|----------|
+| pH mock | 6.8 | `src/main.cpp:140` |
+| Reference KH | 7.5 dKH | `src/KHSolver/KHSolver.cpp:8` |
+| KH interval | 1 hour | `src/main.cpp:15` |
+| Mock mode | disabled | `platformio.ini:23` |
+
+**To enable mock mode**: Set `-DUSE_MOCK_PH=1` in `platformio.ini`
+
+## Documentation Structure
+
+When working on specific parts, load:
+- State logic → @docs/STATE_MACHINE.md
+- Hardware / pins / pumps → @docs/HARDWARE.md
+- KH math / formulas → @docs/CALIBRATION.md
+- System design → @docs/ARCHITECTURE.md
 
 ## Hardware Pin Map
 
@@ -128,15 +147,16 @@ CALIB_IDLE → CALIB_MEASURE → (normal measurement) → CALIB_STORE → CALIB_
 
 ## Auto KH Cycle
 
-- Configurable interval (default: 4 hours)
+- Configurable interval (default: 1 hour)
 - Uses `millis()` - non-blocking
+- Auto-starts on boot
 
-## KH Formula
+## System Rules (MANDATORY)
 
-```
-KH = a * (ΔpH_tank / ΔpH_ref) + b        (linear)
-KH = a + b*x + c*x^2                     (quadratic, x = ratio)
-```
+- NEVER use delay() - always use millis()
+- NEVER use blocking loops
+- All timing must be non-blocking
+- Serial logging for every state transition
 
 ## Notes for Agents
 

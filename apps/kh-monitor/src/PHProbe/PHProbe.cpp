@@ -35,9 +35,13 @@ PHProbe::PHProbe()
   , m_wasStable(false)
   , m_stabilityThreshold(DEFAULT_STABILITY_THRESHOLD)
   , m_stabilityDurationMs(DEFAULT_STABILITY_DURATION_MS)
-, m_debugEnabled(false)
+  , m_debugEnabled(false)
   , m_lastDebugTime(0)
   , m_sampleCount(0)
+#if USE_MOCK_PH
+  , m_mockPHValue(7.0f)
+  , m_mockEnabled(false)
+#endif
   {
   }
 
@@ -109,6 +113,13 @@ void PHProbe::update()
 
 float PHProbe::readRawVoltage()
 {
+#if USE_MOCK_PH
+  if (m_mockEnabled) {
+    float voltage = m_mockPHValue / m_slope - m_offset / m_slope;
+    return voltage;
+  }
+#endif
+
   // Take multiple samples and average for better accuracy
   uint32_t adcSum = 0;
   

@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "project": "kh-monitor",
+  "description": "Automated KH monitoring system for ESP32-S3",
+  "workspace": "apps/kh-monitor",
+  "documentation": {
+    "ARCHITECTURE": "docs/ARCHITECTURE.md",
+    "STATE_MACHINE": "docs/STATE_MACHINE.md",
+    "HARDWARE": "docs/HARDWARE.md",
+    "CALIBRATION": "docs/CALIBRATION.md"
+  },
+  "commands": {
+    "build": "platformio run",
+    "upload": "platformio run --target upload",
+    "monitor": "platformio device monitor",
+    "clean": "platformio run --target clean"
+  },
+  "configuration": {
+    "runtime": {
+      "pH_mock": "src/main.cpp:140",
+      "reference_KH": "src/KHSolver/KHSolver.cpp:8",
+      "KH_interval": "src/main.cpp:15",
+      "mock_mode": "platformio.ini:23"
+    }
+  }
+}

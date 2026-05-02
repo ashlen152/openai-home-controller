@@ -5,7 +5,7 @@
 KHSolver::KHSolver()
   : m_type(KHCalibrationType::RATIO_LINEAR)
   , m_inputType(KHInputType::RATIO)
-  , m_a(100.0f)
+  , m_a(7.5f)
   , m_b(0.0f)
   , m_c(0.0f)
   , m_hasValidData(false)
@@ -442,7 +442,7 @@ void KHSolver::resetToFactory()
 {
   m_type = KHCalibrationType::RATIO_LINEAR;
   m_inputType = KHInputType::RATIO;
-  m_a = 100.0f;
+  m_a = 7.5f;
   m_b = 0.0f;
   m_c = 0.0f;
   m_hasValidData = true;

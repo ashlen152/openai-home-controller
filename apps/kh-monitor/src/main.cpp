@@ -12,13 +12,11 @@ static constexpr uint8_t RGB_LED_PIN = 48;
 static constexpr uint8_t PH_ADC_PIN = 1;
 static constexpr uint8_t AIR_PUMP_PIN = 15;
 
-static constexpr unsigned long KH_INTERVAL_MS = 4UL * 60UL * 60UL * 1000UL;
+static constexpr unsigned long KH_INTERVAL_MS = 1UL * 60UL * 60UL * 1000UL;
 static constexpr unsigned long DEBUG_LOG_INTERVAL_MS = 5000UL;
-static constexpr unsigned long SERIAL_CHECK_INTERVAL_MS = 100UL;
 
 static unsigned long g_lastKHRun = 0;
 static unsigned long g_lastDebugLog = 0;
-static unsigned long g_lastSerialCheck = 0;
 static bool g_verboseMode = false;
 
 void setLEDColor(uint8_t r, uint8_t g, uint8_t b) {
@@ -70,68 +68,6 @@ void updateLEDForState(KHState state) {
     case KHState::ERROR:
       setLEDColor(255, 0, 0);
       break;
-  }
-}
-
-void processSerialInput() {
-  if (Serial.available() == 0) {
-    return;
-  }
-
-  String cmd = Serial.readStringUntil('\n');
-  cmd.trim();
-
-  if (cmd.length() == 0) {
-    return;
-  }
-
-  Serial.print("> ");
-  Serial.println(cmd);
-
-  if (cmd == "start") {
-    RefPumpController::getInstance().begin();
-    TankPumpController::getInstance().begin();
-    AerationPump::getInstance().begin(AIR_PUMP_PIN);
-    KHStateMachine::getInstance().start();
-    Serial.println("[MAIN] KH cycle started");
-  }
-  else if (cmd == "stop") {
-    KHStateMachine::getInstance().stop();
-    Serial.println("[MAIN] KH cycle stopped");
-  }
-  else if (cmd == "status") {
-    Serial.println("========== System Status ==========");
-    Serial.printf("Uptime: %lu seconds\n", millis() / 1000UL);
-    Serial.printf("State: %s\n", KHStateMachine::getInstance().getStateName());
-    Serial.printf("Last KH: %.2f dKH\n", KHSolver::getInstance().getLastValidKH());
-    Serial.printf("Calibration points: %d\n", KHStateMachine::getInstance().getCalibPointCount());
-    Serial.printf("Verbose: %s\n", g_verboseMode ? "ON" : "OFF");
-    Serial.println("====================================");
-  }
-  else if (cmd == "verbose") {
-    g_verboseMode = !g_verboseMode;
-    KHStateMachine::getInstance().setVerbose(g_verboseMode);
-    KHSolver::getInstance().setVerbose(g_verboseMode);
-    Serial.printf("[MAIN] Verbose mode: %s\n", g_verboseMode ? "ON" : "OFF");
-  }
-  else if (cmd.startsWith("kh ")) {
-    if (!KHStateMachine::getInstance().processCommand(cmd)) {
-      KHSolver::getInstance().processSerialCommand(cmd);
-    }
-  }
-  else if (cmd == "help") {
-    Serial.println("========== Available Commands ==========");
-    Serial.println("start          - Start KH measurement cycle");
-    Serial.println("stop           - Stop KH measurement cycle");
-    Serial.println("status         - Print system status");
-    Serial.println("verbose        - Toggle debug output");
-    Serial.println("kh calib ...   - Calibration commands");
-    Serial.println("kh ...         - Forward to KHSolver");
-    Serial.println("help           - Show this help");
-    Serial.println("========================================");
-  }
-  else {
-    Serial.println("[MAIN] Unknown command. Type 'help' for list.");
   }
 }
 
@@ -189,7 +125,7 @@ void setup() {
   Serial.println("");
   Serial.println("============ KH Monitor ESP32-S3 ============");
   Serial.printf("Build: %s %s\n", __DATE__, __TIME__);
-  Serial.printf("KH Interval: %lu hours\n", KH_INTERVAL_MS / 3600000UL);
+  Serial.printf("KH Interval: %lu hour\n", KH_INTERVAL_MS / 3600000UL);
   Serial.println("============================================");
   Serial.println("");
 
@@ -198,6 +134,12 @@ void setup() {
   setLEDColor(0, 0, 0);
 
   PHProbe::getInstance().begin(PH_ADC_PIN);
+
+#if USE_MOCK_PH
+  PHProbe::getInstance().enableMock(true);
+  PHProbe::getInstance().setMockPH(6.8f);
+  Serial.println("[MAIN] Mock pH mode enabled: 6.8");
+#endif
 
   KHSolver::getInstance().begin();
 
@@ -222,11 +164,12 @@ void setup() {
   KHStateMachine::getInstance().setVerbose(g_verboseMode);
 
   Serial.println("");
-  Serial.println("============ System Ready =================");
-  Serial.println("Type 'help' for available commands");
-  Serial.println("============================================");
+  Serial.println("============ Auto-starting KH ===============");
+  Serial.printf("Interval: %lu hours\n", KH_INTERVAL_MS / 3600000UL);
+  Serial.println("======================================");
   Serial.println("");
 
+  KHStateMachine::getInstance().start();
   g_lastKHRun = millis();
 }
 
@@ -236,12 +179,6 @@ void loop() {
   AerationPump::getInstance().update();
   PHProbe::getInstance().update();
   KHStateMachine::getInstance().update();
-
-  unsigned long now = millis();
-  if (now - g_lastSerialCheck >= SERIAL_CHECK_INTERVAL_MS) {
-    g_lastSerialCheck = now;
-    processSerialInput();
-  }
 
   checkAutoKHTrigger();
   handleKHCompletion();
