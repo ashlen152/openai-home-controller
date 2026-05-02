@@ -151,7 +151,7 @@ void setup() {
   KHStateConfig config;
   config.fillTimeMs = 5000UL;
   config.stabilizeTimeMs = 3000UL;
-  config.aerationTimeMs = 60000UL;
+  config.aerationTimeMs = 900000UL;  // 15 minutes
   config.waitAfterAerationMs = 5000UL;
   config.drainTimeMs = 8000UL;
   config.flushTimeMs = 10000UL;
