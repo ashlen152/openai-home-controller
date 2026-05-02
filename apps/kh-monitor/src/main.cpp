@@ -80,9 +80,10 @@ void logDebugInfo() {
 
   g_lastDebugLog = now;
 
-  Serial.printf("[%lu s] State: %-20s | Last KH: %.2f dKH | pH: %.2f\n",
+  Serial.printf("[%lu s] State: %-20s | REF KH: %.1f | Last KH: %.2f dKH | pH: %.2f\n",
                now / 1000UL,
                KHStateMachine::getInstance().getStateName(),
+               KHSolver::getInstance().getA(),
                KHSolver::getInstance().getLastValidKH(),
                PHProbe::getInstance().getLastFilteredPH());
 }
