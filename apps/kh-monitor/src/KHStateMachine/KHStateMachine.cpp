@@ -425,6 +425,12 @@ void KHStateMachine::handle_AERATE_REFERENCE()
   if (!m_pumpOrAerationRunning) {
     if (m_verbose) Serial.println("[KHState] Starting aeration for reference");
     startAeration(m_config.aerationTimeMs);
+    
+#if USE_MOCK_PH
+    if (m_phProbe && m_phProbe->isMockEnabled()) {
+      m_phProbe->setMockPostAeration(true);
+    }
+#endif
   }
 }
 
@@ -543,6 +549,12 @@ void KHStateMachine::handle_AERATE_TANK()
   if (!m_pumpOrAerationRunning) {
     if (m_verbose) Serial.println("[KHState] Starting aeration for tank");
     startAeration(m_config.aerationTimeMs);
+    
+#if USE_MOCK_PH
+    if (m_phProbe && m_phProbe->isMockEnabled()) {
+      m_phProbe->setMockPostAeration(true);
+    }
+#endif
   }
 }
 

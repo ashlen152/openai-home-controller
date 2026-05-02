@@ -139,7 +139,9 @@ void setup() {
 #if USE_MOCK_PH
   PHProbe::getInstance().enableMock(true);
   PHProbe::getInstance().setMockPH(6.8f);
-  Serial.println("[MAIN] Mock pH mode enabled: 6.8");
+  PHProbe::getInstance().setMockDelta(0.5f);
+  PHProbe::getInstance().setMockPostAeration(false);
+  Serial.println("[MAIN] Mock pH: base=6.8, delta=0.5");
 #endif
 
   KHSolver::getInstance().begin();
