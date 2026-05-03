@@ -441,8 +441,9 @@ bool KHStateMachine::canExit_FLUSH_LINE_TANK()
 void KHStateMachine::handle_FILL_REFERENCE()
 {
   if (!m_pumpOrAerationRunning) {
-    if (m_verbose) Serial.println("[KHState] Starting reference pump for FILL");
-    startPump(KHPump::REFERENCE, true, m_config.fillTimeMs);
+    if (m_verbose) Serial.println("[KHState] FILL_REFERENCE: push through chamber + dead volume");
+    float vol = m_fluidConfig.chamberVolumeMl + m_fluidConfig.getDeadVolumeMl();
+    startPumpVolume(KHPump::REFERENCE, true, vol);
   }
 }
 
