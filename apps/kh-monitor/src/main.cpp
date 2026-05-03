@@ -33,8 +33,8 @@ void updateLEDForState(KHState state) {
     case KHState::FILL_TANK:
       setLEDColor(255, 255, 255);
       break;
-    case KHState::FLUSH_LINE:
-    case KHState::FLUSH_LINE_TANK:
+    case KHState::FLOW_SETTLE:
+    case KHState::FLOW_SETTLE_TANK:
     case KHState::FLUSH_CHAMBER:
       setLEDColor(128, 128, 128);
       break;

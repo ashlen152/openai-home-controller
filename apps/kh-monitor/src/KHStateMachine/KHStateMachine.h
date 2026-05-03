@@ -22,7 +22,7 @@ enum class KHState
   IDLE,
   PRE_FLUSH,
   FILL_REFERENCE,
-  FLUSH_LINE,
+  FLOW_SETTLE,
   STABILIZE_REFERENCE,
   MEASURE_REFERENCE_INITIAL,
   AERATE_REFERENCE,
@@ -31,7 +31,7 @@ enum class KHState
   PARTIAL_DRAIN,
   FLUSH_CHAMBER,
   FILL_TANK,
-  FLUSH_LINE_TANK,
+  FLOW_SETTLE_TANK,
   STABILIZE_TANK,
   MEASURE_TANK_INITIAL,
   AERATE_TANK,
@@ -150,11 +150,11 @@ private:
   void handle_PRE_FLUSH();
   bool canExit_PRE_FLUSH();
 
-  void handle_FLUSH_LINE();
-  bool canExit_FLUSH_LINE();
+  void handle_FLOW_SETTLE();
+  bool canExit_FLOW_SETTLE();
 
-  void handle_FLUSH_LINE_TANK();
-  bool canExit_FLUSH_LINE_TANK();
+  void handle_FLOW_SETTLE_TANK();
+  bool canExit_FLOW_SETTLE_TANK();
 
   void handle_FILL_REFERENCE();
   bool canExit_FILL_REFERENCE();

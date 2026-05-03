@@ -124,12 +124,12 @@ void KHStateMachine::update()
     case KHState::FILL_REFERENCE:
       handle_FILL_REFERENCE();
       canTransition = canExit_FILL_REFERENCE();
-      if (canTransition) transitionTo(KHState::FLUSH_LINE);
+      if (canTransition) transitionTo(KHState::FLOW_SETTLE);
       break;
 
-    case KHState::FLUSH_LINE:
-      handle_FLUSH_LINE();
-      canTransition = canExit_FLUSH_LINE();
+    case KHState::FLOW_SETTLE:
+      handle_FLOW_SETTLE();
+      canTransition = canExit_FLOW_SETTLE();
       if (canTransition) transitionTo(KHState::STABILIZE_REFERENCE);
       break;
 
@@ -186,12 +186,12 @@ void KHStateMachine::update()
     case KHState::FILL_TANK:
       handle_FILL_TANK();
       canTransition = canExit_FILL_TANK();
-      if (canTransition) transitionTo(KHState::FLUSH_LINE_TANK);
+      if (canTransition) transitionTo(KHState::FLOW_SETTLE_TANK);
       break;
 
-    case KHState::FLUSH_LINE_TANK:
-      handle_FLUSH_LINE_TANK();
-      canTransition = canExit_FLUSH_LINE_TANK();
+    case KHState::FLOW_SETTLE_TANK:
+      handle_FLOW_SETTLE_TANK();
+      canTransition = canExit_FLOW_SETTLE_TANK();
       if (canTransition) transitionTo(KHState::STABILIZE_TANK);
       break;
 
@@ -333,7 +333,7 @@ const char* KHStateMachine::getStateName() const
     case KHState::IDLE: return "IDLE";
     case KHState::PRE_FLUSH: return "PRE_FLUSH";
     case KHState::FILL_REFERENCE: return "FILL_REFERENCE";
-    case KHState::FLUSH_LINE: return "FLUSH_LINE";
+    case KHState::FLOW_SETTLE: return "FLOW_SETTLE";
     case KHState::STABILIZE_REFERENCE: return "STABILIZE_REFERENCE";
     case KHState::MEASURE_REFERENCE_INITIAL: return "MEASURE_REFERENCE_INITIAL";
     case KHState::AERATE_REFERENCE: return "AERATE_REFERENCE";
@@ -342,7 +342,7 @@ const char* KHStateMachine::getStateName() const
     case KHState::PARTIAL_DRAIN: return "PARTIAL_DRAIN";
     case KHState::FLUSH_CHAMBER: return "FLUSH_CHAMBER";
     case KHState::FILL_TANK: return "FILL_TANK";
-    case KHState::FLUSH_LINE_TANK: return "FLUSH_LINE_TANK";
+    case KHState::FLOW_SETTLE_TANK: return "FLOW_SETTLE_TANK";
     case KHState::STABILIZE_TANK: return "STABILIZE_TANK";
     case KHState::MEASURE_TANK_INITIAL: return "MEASURE_TANK_INITIAL";
     case KHState::AERATE_TANK: return "AERATE_TANK";
@@ -416,24 +416,24 @@ bool KHStateMachine::canExit_PRE_FLUSH()
   return checkPumpOrAerationComplete();
 }
 
-void KHStateMachine::handle_FLUSH_LINE()
+void KHStateMachine::handle_FLOW_SETTLE()
 {
 }
 
-bool KHStateMachine::canExit_FLUSH_LINE()
+bool KHStateMachine::canExit_FLOW_SETTLE()
 {
   return (millis() - m_stateEntryTime >= 2000UL);
 }
 
-void KHStateMachine::handle_FLUSH_LINE_TANK()
+void KHStateMachine::handle_FLOW_SETTLE_TANK()
 {
   if (!m_pumpOrAerationRunning) {
-    if (m_verbose) Serial.println("[KHState] FLUSH_LINE_TANK: flush dead volume");
+    if (m_verbose) Serial.println("[KHState] FLOW_SETTLE_TANK: settle after fill");
     startPumpVolume(KHPump::TANK, true, m_fluidConfig.getDeadVolumeMl());
   }
 }
 
-bool KHStateMachine::canExit_FLUSH_LINE_TANK()
+bool KHStateMachine::canExit_FLOW_SETTLE_TANK()
 {
   return checkPumpOrAerationComplete();
 }
