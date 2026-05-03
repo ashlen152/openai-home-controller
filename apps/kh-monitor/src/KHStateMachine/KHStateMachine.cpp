@@ -406,8 +406,8 @@ bool KHStateMachine::canExit_IDLE()
 void KHStateMachine::handle_PRE_FLUSH()
 {
   if (!m_pumpOrAerationRunning) {
-    if (m_verbose) Serial.println("[KHState] PRE_FLUSH: pre-fill dead volume");
-    startPumpVolume(KHPump::REFERENCE, true, m_fluidConfig.getDeadVolumeMl());
+    if (m_verbose) Serial.println("[KHState] PRE_FLUSH: flush 2.5x dead volume");
+    startPumpVolume(KHPump::REFERENCE, true, m_fluidConfig.getFlushVolumeMl());
   }
 }
 
