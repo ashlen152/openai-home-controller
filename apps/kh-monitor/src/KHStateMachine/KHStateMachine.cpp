@@ -272,7 +272,7 @@ void KHStateMachine::start()
   m_totalRuntime = 0;
   m_errorMessage = "";
 
-  transitionTo(KHState::FILL_REFERENCE);
+  transitionTo(KHState::PRE_FLUSH);
 }
 
 void KHStateMachine::stop()
