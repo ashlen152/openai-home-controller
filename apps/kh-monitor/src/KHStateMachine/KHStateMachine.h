@@ -147,6 +147,15 @@ private:
   void handle_IDLE();
   bool canExit_IDLE();
 
+  void handle_PRE_FLUSH();
+  bool canExit_PRE_FLUSH();
+
+  void handle_FLUSH_LINE();
+  bool canExit_FLUSH_LINE();
+
+  void handle_FLUSH_LINE_TANK();
+  bool canExit_FLUSH_LINE_TANK();
+
   void handle_FILL_REFERENCE();
   bool canExit_FILL_REFERENCE();
 

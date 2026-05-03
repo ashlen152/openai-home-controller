@@ -112,12 +112,24 @@ void KHStateMachine::update()
     case KHState::IDLE:
       handle_IDLE();
       canTransition = canExit_IDLE();
+      if (canTransition) transitionTo(KHState::PRE_FLUSH);
+      break;
+
+    case KHState::PRE_FLUSH:
+      handle_PRE_FLUSH();
+      canTransition = canExit_PRE_FLUSH();
       if (canTransition) transitionTo(KHState::FILL_REFERENCE);
       break;
 
     case KHState::FILL_REFERENCE:
       handle_FILL_REFERENCE();
       canTransition = canExit_FILL_REFERENCE();
+      if (canTransition) transitionTo(KHState::FLUSH_LINE);
+      break;
+
+    case KHState::FLUSH_LINE:
+      handle_FLUSH_LINE();
+      canTransition = canExit_FLUSH_LINE();
       if (canTransition) transitionTo(KHState::STABILIZE_REFERENCE);
       break;
 
@@ -174,6 +186,12 @@ void KHStateMachine::update()
     case KHState::FILL_TANK:
       handle_FILL_TANK();
       canTransition = canExit_FILL_TANK();
+      if (canTransition) transitionTo(KHState::FLUSH_LINE_TANK);
+      break;
+
+    case KHState::FLUSH_LINE_TANK:
+      handle_FLUSH_LINE_TANK();
+      canTransition = canExit_FLUSH_LINE_TANK();
       if (canTransition) transitionTo(KHState::STABILIZE_TANK);
       break;
 
@@ -383,6 +401,41 @@ void KHStateMachine::handle_IDLE()
 bool KHStateMachine::canExit_IDLE()
 {
   return false;
+}
+
+void KHStateMachine::handle_PRE_FLUSH()
+{
+  if (!m_pumpOrAerationRunning) {
+    if (m_verbose) Serial.println("[KHState] PRE_FLUSH: pre-fill dead volume");
+    startPumpVolume(KHPump::REFERENCE, true, m_fluidConfig.getDeadVolumeMl());
+  }
+}
+
+bool KHStateMachine::canExit_PRE_FLUSH()
+{
+  return checkPumpOrAerationComplete();
+}
+
+void KHStateMachine::handle_FLUSH_LINE()
+{
+}
+
+bool KHStateMachine::canExit_FLUSH_LINE()
+{
+  return (millis() - m_stateEntryTime >= 2000UL);
+}
+
+void KHStateMachine::handle_FLUSH_LINE_TANK()
+{
+  if (!m_pumpOrAerationRunning) {
+    if (m_verbose) Serial.println("[KHState] FLUSH_LINE_TANK: flush dead volume");
+    startPumpVolume(KHPump::TANK, true, m_fluidConfig.getDeadVolumeMl());
+  }
+}
+
+bool KHStateMachine::canExit_FLUSH_LINE_TANK()
+{
+  return checkPumpOrAerationComplete();
 }
 
 void KHStateMachine::handle_FILL_REFERENCE()
