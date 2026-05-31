@@ -38,6 +38,7 @@ export class PumpSettingsController {
       const serverSettings = {
         enabled: p.enabled,
         dailyVolume: p.dailyVolume,
+        scheduleSlots: p.scheduleSlots,
         dayStartHour: p.dayStartHour,
         dayEndHour: p.dayEndHour,
         dayPercent: p.dayPercent,
@@ -50,6 +51,7 @@ export class PumpSettingsController {
         ? {
             enabled: status.reportedEnabled,
             dailyVolume: status.reportedDailyVolume,
+            scheduleSlots: status.reportedScheduleSlots,
             dayStartHour: status.reportedDayStartHour,
             dayEndHour: status.reportedDayEndHour,
             dayPercent: status.reportedDayPercent,
@@ -68,6 +70,7 @@ export class PumpSettingsController {
         pumpId: p.pumpId,
         enabled: p.enabled,
         dailyVolume: p.dailyVolume,
+        scheduleSlots: p.scheduleSlots,
         dayStartHour: p.dayStartHour,
         dayEndHour: p.dayEndHour,
         dayPercent: p.dayPercent,
@@ -89,6 +92,7 @@ export class PumpSettingsController {
         lastSettingsSync: status?.lastSettingsSync || null,
         reportedEnabled: status?.reportedEnabled ?? null,
         reportedDailyVolume: status?.reportedDailyVolume ?? null,
+        reportedScheduleSlots: status?.reportedScheduleSlots ?? null,
         reportedDayStartHour: status?.reportedDayStartHour ?? null,
         reportedDayEndHour: status?.reportedDayEndHour ?? null,
         reportedDayPercent: status?.reportedDayPercent ?? null,
@@ -134,9 +138,10 @@ export class PumpSettingsController {
   @Post('sync-from-device/:pumpId')
   async syncFromDevice(
     @Param('pumpId') pumpId: string,
-    @Body() body: {
+    @Body()       body: {
       enabled: boolean;
       dailyVolume: number;
+      scheduleSlots: number;
       dayStartHour: number;
       dayEndHour: number;
       dayPercent: number;
@@ -173,6 +178,7 @@ export class PumpSettingsController {
       freeHeap: dto.freeHeap,
       reportedEnabled: dto.enabled,
       reportedDailyVolume: dto.dailyVolume,
+      reportedScheduleSlots: dto.scheduleSlots,
       reportedDayStartHour: dto.dayStartHour,
       reportedDayEndHour: dto.dayEndHour,
       reportedDayPercent: dto.dayPercent,

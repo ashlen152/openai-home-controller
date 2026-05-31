@@ -64,6 +64,11 @@ export class CreatePumpSettingsDto {
   dayPercent: number;
 
   @IsNumber()
+  @Min(1)
+  @Max(288)
+  scheduleSlots: number;
+
+  @IsNumber()
   stepsPerML: number;
 
   @IsNumber()

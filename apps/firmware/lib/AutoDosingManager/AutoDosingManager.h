@@ -6,7 +6,7 @@
  * day and night periods with configurable weighting (default: 60/40).
  *
  * Schedule generation:
- *   - Divides 24h into N slots (default 48 = every 30 minutes)
+ *   - Divides 24h into N slots (default 24 = every 60 minutes)
  *   - Day period (11:00-23:00): receives 60% of daily volume
  *   - Night period (23:00-11:00): receives 40% of daily volume
  *   - Each dose within a period is equally sized
@@ -112,6 +112,8 @@ public:
     uint8_t getDayStartHour() const { return startHour; }
     uint8_t getDayEndHour() const { return endHour; }
     uint8_t getDayPercent() const { return (uint8_t)(percent1 * 100); }
+    void setScheduleSlots(uint8_t newSlots);
+    uint8_t getScheduleSlots() const { return slots; }
     void updateSchedule();
     void checkAndDose();
     void updateDosingProgress();  // Phase 4: Check and complete in-progress doses

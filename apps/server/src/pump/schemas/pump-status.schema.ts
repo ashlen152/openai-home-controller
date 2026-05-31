@@ -46,6 +46,9 @@ export class PumpStatus {
   reportedDayPercent: number;
 
   @Prop()
+  reportedScheduleSlots: number;
+
+  @Prop()
   reportedStepsPerML: number;
 
   @Prop()

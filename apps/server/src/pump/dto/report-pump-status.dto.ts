@@ -51,6 +51,10 @@ export class ReportPumpStatusDto {
 
   @IsOptional()
   @IsNumber()
+  reportedScheduleSlots?: number;
+
+  @IsOptional()
+  @IsNumber()
   reportedStepsPerML?: number;
 
   @IsOptional()

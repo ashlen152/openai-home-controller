@@ -221,6 +221,30 @@ void AutoDosingManager::setDayNightSplit(uint8_t dayPercent) {
 
 
 // ============================================================================
+// SCHEDULE SLOTS CONFIGURATION (Phase 4)
+// ============================================================================
+
+void AutoDosingManager::setScheduleSlots(uint8_t newSlots) {
+    if (!m_initialized) {
+        AUTO_DOSING_LOG("ERROR: setScheduleSlots() called before initialize()");
+        return;
+    }
+    
+    if (newSlots < 1 || newSlots > 288) {
+        AUTO_DOSING_LOG("ERROR: Invalid schedule slots %d (must be 1-288)", newSlots);
+        return;
+    }
+    
+    AUTO_DOSING_LOG("Setting schedule slots to %d", newSlots);
+    slots = newSlots;
+    
+    // Regenerate schedule with new slot count
+    generateWeightedSchedule(slots, scheduleMeta.totalDailyVolume, startHour, endHour, percent1, percent2);
+    updateSchedule();
+    saveState();
+}
+
+// ============================================================================
 // CORE FUNCTION 1: generateWeightedSchedule()
 // ============================================================================
 
@@ -236,7 +260,7 @@ void AutoDosingManager::generateWeightedSchedule(int slots, float totalMl,
         return;
     }
     
-    int intervalMinutes = 1440 / slots;  // e.g., 48 slots = 30 min each
+    int intervalMinutes = 1440 / slots;  // e.g., 24 slots = 60 min each
     
     float total1 = totalMl * percent1;  // Day volume (60%)
     float total2 = totalMl * percent2;  // Night volume (40%)
@@ -609,6 +633,7 @@ void AutoDosingManager::loadState() {
     uint8_t storedDayStartHour = 11;  // defaults
     uint8_t storedDayEndHour = 23;
     uint8_t storedDayPercent = 60;
+    uint8_t storedScheduleSlots = ::Config::DEFAULT_SCHEDULE_SLOTS;
     
     EEPROM.get(eepromConfig.enabledAddr, enabled);
     EEPROM.get(eepromConfig.volumeAddr, storedDailyVolume);
@@ -617,6 +642,7 @@ void AutoDosingManager::loadState() {
     EEPROM.get(eepromConfig.dayStartHourAddr, storedDayStartHour);
     EEPROM.get(eepromConfig.dayEndHourAddr, storedDayEndHour);
     EEPROM.get(eepromConfig.dayPercentAddr, storedDayPercent);
+    EEPROM.get(::Config::EEPROM_SCHEDULE_SLOTS_ADDR, storedScheduleSlots);
     
     if (storedDayPercent > 100) {
         AUTO_DOSING_LOG("  WARN: dayPercent out of range (%d), clamping to 70", storedDayPercent);
@@ -641,6 +667,11 @@ void AutoDosingManager::loadState() {
         percent2 = (100 - storedDayPercent) / 100.0f;
     }
     
+    // Validate and set schedule slots
+    if (storedScheduleSlots >= 1 && storedScheduleSlots <= 288) {
+        slots = storedScheduleSlots;
+    }
+    
     AUTO_DOSING_LOG("Loaded from EEPROM:");
     AUTO_DOSING_LOG("  Enabled: %s", scheduleMeta.enabled ? "YES" : "NO");
     AUTO_DOSING_LOG("  Daily Volume: %.2f ml", scheduleMeta.totalDailyVolume);
@@ -648,6 +679,7 @@ void AutoDosingManager::loadState() {
     AUTO_DOSING_LOG("  Total Dosed: %.2f ml", totalDosedVolume);
     AUTO_DOSING_LOG("  Day Period: %02d:00 to %02d:00", startHour, endHour);
     AUTO_DOSING_LOG("  Day/Night Split: %d%% / %d%%", storedDayPercent, 100 - storedDayPercent);
+    AUTO_DOSING_LOG("  Schedule Slots: %d", slots);
     
     // Load pause state (Phase 3 Sprint 5)
     EEPROM.get(::Config::EEPROM_PAUSE_STATE_ADDR, paused);
@@ -693,6 +725,7 @@ void AutoDosingManager::saveState() {
     EEPROM.put(eepromConfig.dayStartHourAddr, (uint8_t)startHour);
     EEPROM.put(eepromConfig.dayEndHourAddr, (uint8_t)endHour);
     EEPROM.put(eepromConfig.dayPercentAddr, dayPercent);
+    EEPROM.put(::Config::EEPROM_SCHEDULE_SLOTS_ADDR, (uint8_t)slots);
     
     // Save pause state (Phase 3 Sprint 5)
     EEPROM.put(::Config::EEPROM_PAUSE_STATE_ADDR, paused);

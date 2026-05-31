@@ -38,6 +38,7 @@ export class PumpSettingsService {
       if (dto.dayStartHour !== undefined) updateData.dayStartHour = dto.dayStartHour;
       if (dto.dayEndHour !== undefined) updateData.dayEndHour = dto.dayEndHour;
       if (dto.dayPercent !== undefined) updateData.dayPercent = dto.dayPercent;
+      if (dto.scheduleSlots !== undefined) updateData.scheduleSlots = dto.scheduleSlots;
       if (dto.stepsPerML !== undefined) updateData.stepsPerML = dto.stepsPerML;
       if (dto.activeProfile !== undefined) updateData.activeProfile = dto.activeProfile;
       if (dto.pausedUntil !== undefined) updateData.pausedUntil = dto.pausedUntil;
@@ -55,6 +56,7 @@ export class PumpSettingsService {
         dayStartHour: createDto.dayStartHour ?? 8,
         dayEndHour: createDto.dayEndHour ?? 20,
         dayPercent: createDto.dayPercent ?? 70,
+        scheduleSlots: createDto.scheduleSlots ?? 24,
         stepsPerML: createDto.stepsPerML ?? 17730,
         activeProfile: createDto.activeProfile ?? 1,
         pausedUntil: createDto.pausedUntil ?? 0,

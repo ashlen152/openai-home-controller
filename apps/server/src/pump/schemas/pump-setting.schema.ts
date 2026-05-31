@@ -23,6 +23,9 @@ export class PumpSetting {
   @Prop({ required: true, min: 0, max: 100 })
   dayPercent: number;
 
+  @Prop({ required: true, min: 1, max: 288 })
+  scheduleSlots: number;
+
   @Prop({ required: true })
   stepsPerML: number;
 

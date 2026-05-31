@@ -133,18 +133,27 @@ void handleNetworkResponses() {
               }
             }
 
+            if (data["scheduleSlots"].is<int>()) {
+              int scheduleSlots = data["scheduleSlots"].as<int>();
+              if (scheduleSlots >= 1 && scheduleSlots <= 288) {
+                autoDosing.setScheduleSlots((uint8_t)scheduleSlots);
+              }
+            }
+
             NetworkCommandMessage reportCmd;
             reportCmd.command = NetworkCommand::HTTP_POST_SETTINGS;
             memset(reportCmd.data, 0, sizeof(reportCmd.data));
             snprintf(reportCmd.data, sizeof(reportCmd.data),
                      "{\"pumpId\":\"%s\",\"enabled\":%s,\"dailyVolume\":%.1f,"
                      "\"dayStartHour\":%d,\"dayEndHour\":%d,\"dayPercent\":%d,"
+                     "\"scheduleSlots\":%d,"
                      "\"stepsPerML\":%.0f,\"activeProfile\":%d}",
                      ConfigManager::getInstance().getPumpId(),
                      autoDosing.isEnabled() ? "true" : "false",
                      autoDosing.getDailyVolume(), autoDosing.getDayStartHour(),
                      autoDosing.getDayEndHour(),
-                     (int)autoDosing.getDayPercent(), pump.getStepsPerML(),
+                     (int)autoDosing.getDayPercent(),
+                     (int)autoDosing.getScheduleSlots(), pump.getStepsPerML(),
                      pump.getActiveProfile());
             networkTask.sendCommand(reportCmd, 0);
           }

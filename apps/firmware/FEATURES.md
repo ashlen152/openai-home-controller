@@ -328,7 +328,7 @@ ctx.nextSchedule = nullptr;    // Should be: next dose time from schedule
 - Generate time-based dosing schedule
 - Day period (11:00-23:00): 60% of daily volume
 - Night period (23:00-11:00): 40% of daily volume
-- 48 time slots per day (every 30 minutes)
+- 24 time slots per day (every 60 minutes)
 - Automatic execution at scheduled times
 - Daily reset at midnight
 - EEPROM persistence of state
@@ -336,7 +336,7 @@ ctx.nextSchedule = nullptr;    // Should be: next dose time from schedule
 **Missing Implementations**:
 | Function | Status | Description |
 |----------|--------|-------------|
-| `generateWeightedSchedule()` | ❌ **NOT IMPLEMENTED** | Create 48-slot schedule with day/night weighting |
+| `generateWeightedSchedule()` | ❌ **NOT IMPLEMENTED** | Create 24-slot schedule with day/night weighting |
 | `checkAndDose()` | ❌ **NOT IMPLEMENTED** | Check if current time matches schedule |
 | `resetDailyVolume()` | ❌ **NOT IMPLEMENTED** | Reset counter at midnight |
 | `performDosing()` | ❌ **NOT IMPLEMENTED** | Execute dosing when triggered |

@@ -55,7 +55,7 @@ If you need to migrate to another computer or restore memory:
 
 ### Class: AutoDosingManager
 - WIP - automated dosing scheduler with weighted day/night distribution
-- Default: 48 slots/day, 60% day (11:00-23:00), 40% night (23:00-11:00)
+- Default: 24 slots/day, 60% day (11:00-23:00), 40% night (23:00-11:00)
 - Persists state to EEPROM (enabled, daily volume, last dose time, total dosed)
 - BUG: generateWeightedSchedule(), checkAndDose(), resetDailyVolume(), performDosing(), getRemainingDailyVolume() are incomplete
 - Currently commented out in main.cpp (not instantiated)

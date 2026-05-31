@@ -33,6 +33,12 @@ export class ReportPumpSettingsDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(1)
+  @Max(288)
+  scheduleSlots?: number;
+
+  @IsOptional()
+  @IsNumber()
   stepsPerML?: number;
 
   @IsOptional()

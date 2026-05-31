@@ -71,6 +71,7 @@ namespace Config
     constexpr int EEPROM_SERVER_STEPS_PERML_ADDR = 266;  // 4 bytes (float)
     constexpr int EEPROM_SERVER_PROFILE_ADDR = 270;     // 1 byte (uint8_t)
     constexpr int EEPROM_SERVER_SYNC_TIME_ADDR = 271;   // 4 bytes (uint32_t)
+    constexpr int EEPROM_SCHEDULE_SLOTS_ADDR = 275;     // 1 byte (uint8_t)
     
     constexpr int EEPROM_ADDR = 0; // base EEPROM address (legacy)
 
@@ -93,7 +94,7 @@ namespace Config
     // Auto Dosing Defaults
     // ==========================
     constexpr float DEFAULT_DAILY_VOLUME = 30.0f; // Default daily volume in mL
-    constexpr int DEFAULT_SCHEDULE_SLOTS = 48;
+    constexpr int DEFAULT_SCHEDULE_SLOTS = 24;
     constexpr uint8_t DEFAULT_DAY_START_HOUR = 8;
     constexpr uint8_t DEFAULT_DAY_END_HOUR = 20;
     constexpr uint8_t DEFAULT_DAY_PERCENT = 70;

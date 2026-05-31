@@ -51,7 +51,12 @@ void setup() {
     ;
   Serial.println("Starting SmartPump...");
 
-  esp_task_wdt_init(30, true);
+  esp_task_wdt_config_t wdt_config = {
+      .timeout_ms = 30000,
+      .idle_core_mask = 0,
+      .trigger_panic = true,
+  };
+  esp_task_wdt_init(&wdt_config);
   esp_task_wdt_add(NULL);
   Serial.println("Watchdog timer initialized (30s timeout)");
 

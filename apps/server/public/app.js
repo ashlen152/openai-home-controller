@@ -531,6 +531,7 @@
               <span><strong>Day:</strong> ${p.dayStartHour || 0}:00 - ${p.dayEndHour || 24}:00</span>
               <span><strong>Day %:</strong> ${p.dayPercent || 0}%</span>
               <span><strong>Steps/ml:</strong> ${p.stepsPerML || 0}</span>
+              <span><strong>Slots:</strong> ${p.scheduleSlots || 24}</span>
               <span><strong>Profile:</strong> ${['Slow', 'Med', 'Fast'][p.activeProfile] || 'Med'}</span>
               ${extraInfo}
             </div>
@@ -798,6 +799,7 @@
     document.getElementById('dayEndHour').value = isEdit ? pump.dayEndHour : 20;
     document.getElementById('dayPercent').value = isEdit ? pump.dayPercent : 70;
     document.getElementById('stepsPerML').value = isEdit ? pump.stepsPerML : 12800;
+    document.getElementById('scheduleSlots').value = isEdit ? (pump.scheduleSlots || 24) : 24;
     document.getElementById('activeProfile').value = isEdit ? pump.activeProfile : 1;
     document.getElementById('pumpModal').classList.add('open');
     window._editingPump = isEdit ? pump.pumpId || pump.id : null;
@@ -818,6 +820,7 @@
       dayEndHour: parseInt(document.getElementById('dayEndHour').value),
       dayPercent: parseInt(document.getElementById('dayPercent').value),
       stepsPerML: parseInt(document.getElementById('stepsPerML').value),
+      scheduleSlots: parseInt(document.getElementById('scheduleSlots').value),
       activeProfile: parseInt(document.getElementById('activeProfile').value),
     };
 
@@ -1190,6 +1193,7 @@
       dayStartHour: pump.dayStartHour,
       dayEndHour: pump.dayEndHour,
       dayPercent: pump.dayPercent,
+      scheduleSlots: pump.scheduleSlots,
       stepsPerML: pump.stepsPerML,
       activeProfile: pump.activeProfile,
       pausedUntil: pump.pausedUntil,
@@ -1202,6 +1206,7 @@
           dayStartHour: pump.reportedDayStartHour,
           dayEndHour: pump.reportedDayEndHour,
           dayPercent: pump.reportedDayPercent,
+          scheduleSlots: pump.reportedScheduleSlots,
           stepsPerML: pump.reportedStepsPerML,
           activeProfile: pump.reportedActiveProfile,
           pausedUntil: pump.reportedPausedUntil,
@@ -1214,6 +1219,7 @@
       dayStartHour: 'Day Start Hour',
       dayEndHour: 'Day End Hour',
       dayPercent: 'Day Percent (%)',
+      scheduleSlots: 'Schedule Slots',
       stepsPerML: 'Steps/mL',
       activeProfile: 'Speed Profile',
       pausedUntil: 'Paused Until',
